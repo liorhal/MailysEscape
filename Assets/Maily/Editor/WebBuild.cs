@@ -18,6 +18,7 @@ namespace Maily.EditorTools
         {
             PlayerSettings.companyName = "Lior Halachmi";
             PlayerSettings.productName = "Maily's Great Escape";
+            PlayerSettings.WebGL.template = "PROJECT:Maily";               // Assets/WebGLTemplates/Maily: full-window page, Hebrew title
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
             PlayerSettings.WebGL.decompressionFallback = true;   // works on hosts that don't send Content-Encoding
             PlayerSettings.WebGL.dataCaching = true;

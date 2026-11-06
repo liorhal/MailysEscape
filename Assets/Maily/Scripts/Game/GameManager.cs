@@ -60,6 +60,22 @@ namespace Maily
             I = this;
             Time.timeScale = 1f;
             Application.targetFrameRate = 120;
+#if UNITY_WEBGL && !UNITY_EDITOR
+            WebPerformance();
+#endif
+        }
+
+        /// <summary>Browser build: lighter rendering so laptops with built-in graphics stay smooth.</summary>
+        static void WebPerformance()
+        {
+            if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset urp)
+            {
+                urp.renderScale = 0.8f;
+                urp.shadowDistance = 45f;
+                urp.msaaSampleCount = 1;
+                urp.shadowCascadeCount = 1;
+            }
+            QualitySettings.lodBias = 0.7f;
         }
 
         void Start() => SetState(GameState.Title);
