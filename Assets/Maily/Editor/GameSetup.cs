@@ -20,6 +20,8 @@ namespace Maily.EditorTools
         // Model orientation fix-ups (Meshy export): yaw so her nose points +Z, target height in metres.
         public static float MailyYaw = 0f;
         public static float MailyHeight = 0.62f;
+        /// <summary>Maily's house (OSM building centroid, metres): the one just north of the northern street dog's old patch.</summary>
+        public static Vector2? HomeHouse = new Vector2(-185f, 538f);
 
         [MenuItem("Maily/Build Kibbutz Scene")]
         public static string BuildAll()
@@ -54,6 +56,7 @@ namespace Maily.EditorTools
             string spots = SpawnMiniGames(world, rnd, gameplay, spawn);
             int landmarks = SpawnLandmarks(world, rnd, gameplay, home.pos);
             log.AppendLine(TrafficSetup.Build(world, new System.Random(77), spawn));
+            log.AppendLine(SpawnFamily(world, gameplay, spawn));
             log.AppendLine($"Spawned: Maily @ {spawn}, {dogs} dogs, {parrots} parrots, {treats} treats, {bullies} street dogs");
             log.AppendLine($"Mini-games: {spots}; landmarks: {landmarks}");
 
@@ -243,6 +246,40 @@ namespace Maily.EditorTools
             return root.transform;
         }
 
+        /// <summary>Maily's family at the front door of her house (the door faces the garden gate where she starts).</summary>
+        static string SpawnFamily(KibbutzBuilder.Result w, Transform parent, Vector3 spawn)
+        {
+            var s2 = new Vector2(spawn.x, spawn.z);
+            var target = HomeHouse ?? s2;
+            var poly = w.BuildingPolys.OrderBy(p => (Geo.Centroid(p) - target).sqrMagnitude).First();
+            Vector2 q = Geo.Centroid(poly); float bd = float.MaxValue;
+            for (int i = 0; i < poly.Count; i++)
+            {
+                var a = poly[i]; var ab = poly[(i + 1) % poly.Count] - a;
+                float t = Mathf.Clamp01(Vector2.Dot(s2 - a, ab) / Mathf.Max(1e-4f, ab.sqrMagnitude));
+                var c = a + ab * t; float d = (c - s2).magnitude;
+                if (d < bd) { bd = d; q = c; }
+            }
+            var door2 = q + (s2 - q).normalized * 0.9f;
+            var go = new GameObject("Maily's Family"); go.transform.SetParent(parent);
+            var fam = go.AddComponent<Family>();
+            fam.Door = new Vector3(door2.x, 0.05f, door2.y); fam.Gate = spawn;
+            var looks = new (string name, float h, float speed, Color shirt, Color pants, Color hair, bool longHair)[]
+            {
+                ("Parent", 1.78f, 5.6f, Palette.MiniSky, new Color(0.24f, 0.3f, 0.46f), Palette.DogBrown, false),
+                ("Child", 1.3f, 5.0f, Palette.Citrus, Palette.Trunk, Palette.UiInk, true),
+            };
+            foreach (var l in looks)
+            {
+                var m = new GameObject("Family " + l.name); m.transform.SetParent(go.transform);
+                m.transform.position = fam.Door;
+                var fm = m.AddComponent<FamilyMember>(); fm.RunSpeed = l.speed;
+                CharacterKit.BuildPerson(fm, l.h, l.shirt, l.pants, l.hair, l.longHair);
+                fam.Members.Add(fm);
+            }
+            return $"Family: door @ ({fam.Door.x:0},{fam.Door.z:0}), {bd:0.0} m from the gate";
+        }
+
         static Bounds Bounds(GameObject go)
         {
             var rs = go.GetComponentsInChildren<Renderer>();
@@ -254,14 +291,18 @@ namespace Maily.EditorTools
 
         static (Vector3 spawn, float yaw, (Vector3 pos, float yaw) doghouse) ChooseHome(KibbutzBuilder.Result w, System.Random rnd)
         {
-            // a house 100–220 m from the dining hall, right next to a footpath
+            // Maily's real home: the house the player chose (north-west quarter); otherwise a house
+            // 100–220 m from the dining hall, right next to a footpath
             var feet = w.Roads.Where(r => r.kind == "footway" || r.kind == "path").ToList();
+            if (HomeHouse.HasValue && feet.Count == 0) feet = w.Roads;
             var candidates = new List<(Vector2 c, Vector2 near, float d)>();
+            var chosen = HomeHouse.HasValue ? w.BuildingPolys.OrderBy(p => (Geo.Centroid(p) - HomeHouse.Value).sqrMagnitude).FirstOrDefault() : null;
             foreach (var poly in w.BuildingPolys)
             {
                 var c = Geo.Centroid(poly); float dist = c.magnitude;
                 float area = Mathf.Abs(Geo.SignedArea(poly));
-                if (dist < 100 || dist > 220 || area < 60 || area > 220) continue;
+                if (chosen != null) { if (poly != chosen) continue; }
+                else if (dist < 100 || dist > 220 || area < 60 || area > 220) continue;
                 Vector2 best = Vector2.zero; float bd = float.MaxValue;
                 foreach (var r in feet)
                     for (int i = 0; i < r.line.Count - 1; i++)
@@ -269,12 +310,13 @@ namespace Maily.EditorTools
                         var a = r.line[i]; var ab = r.line[i + 1] - a; float t = Mathf.Clamp01(Vector2.Dot(c - a, ab) / Mathf.Max(1e-4f, ab.sqrMagnitude));
                         var q = a + ab * t; float dd = (q - c).magnitude; if (dd < bd) { bd = dd; best = q; }
                     }
-                if (bd < 18f) candidates.Add((c, best, bd));
+                if (bd < (chosen != null ? 40f : 18f)) candidates.Add((c, best, bd));
             }
             foreach (var cand in candidates.OrderBy(x => rnd.Next()))
             {
                 var away = (cand.near - cand.c).normalized;
                 var spawn = new Vector3(cand.near.x, 0.1f, cand.near.y);
+                for (int step = 0; step < 8 && !Free(spawn, 0.4f); step++) spawn += new Vector3(away.x, 0, away.y) * 1.5f; // step off obstacles
                 if (!Free(spawn, 0.4f)) continue;
                 var dh2 = cand.near - away * 2.2f + new Vector2(-away.y, away.x) * 2.0f;
                 var dh = new Vector3(dh2.x, 0.05f, dh2.y);

@@ -228,6 +228,35 @@ namespace Maily
             spot.Icon = icon; spot.Ring = ring.GetComponent<Renderer>();
         }
 
+        /// <summary>A member of Maily's family: simple figure with pivots at hips and shoulders for the run cycle.</summary>
+        public static void BuildPerson(FamilyMember m, float height, Color shirt, Color pants, Color hair, bool longHair)
+        {
+            var root = m.transform; float k = height / 1.75f;
+            var skin = new Color(0.87f, 0.68f, 0.54f);
+            float leg = 0.82f * k, torso = 0.58f * k, arm = 0.62f * k;
+            foreach (var side in new[] { -1f, 1f })
+            {
+                var hip = Pivot(side < 0 ? "LegL" : "LegR", root, new Vector3(0.1f * k * side, leg, 0));
+                Part(PrimitiveType.Capsule, hip, new Vector3(0, -leg * 0.5f, 0), new Vector3(0.15f * k, leg * 0.5f, 0.15f * k), pants, Key(pants));
+                Part(PrimitiveType.Cube, hip, new Vector3(0, -leg + 0.04f, 0.05f * k), new Vector3(0.13f * k, 0.08f, 0.26f * k), Palette.UiInk, Key(Palette.UiInk));
+                if (side < 0) m.LegL = hip; else m.LegR = hip;
+            }
+            var body = Pivot("Body", root, Vector3.zero); m.Body = body;
+            Part(PrimitiveType.Capsule, body, new Vector3(0, leg + torso * 0.5f, 0), new Vector3(0.38f * k, torso * 0.5f + 0.06f, 0.24f * k), shirt, Key(shirt));
+            float headY = leg + torso + 0.14f * k;
+            Part(PrimitiveType.Sphere, body, new Vector3(0, headY, 0), Vector3.one * 0.25f * k, skin, Key(skin));
+            Part(PrimitiveType.Sphere, body, new Vector3(0, headY + 0.05f * k, -0.03f * k), new Vector3(0.27f, longHair ? 0.24f : 0.18f, 0.27f) * k, hair, Key(hair));
+            if (longHair) Part(PrimitiveType.Capsule, body, new Vector3(0, headY - 0.1f * k, -0.1f * k), new Vector3(0.22f, 0.16f, 0.1f) * k, hair, Key(hair));
+            foreach (var x in new[] { -0.05f, 0.05f }) Part(PrimitiveType.Sphere, body, new Vector3(x * k, headY + 0.02f * k, 0.115f * k), Vector3.one * 0.035f * k, Palette.UiInk, Key(Palette.UiInk));
+            foreach (var side in new[] { -1f, 1f })
+            {
+                var sh = Pivot(side < 0 ? "ArmL" : "ArmR", body, new Vector3(0.24f * k * side, leg + torso - 0.04f * k, 0));
+                Part(PrimitiveType.Capsule, sh, new Vector3(0, -arm * 0.45f, 0), new Vector3(0.11f * k, arm * 0.45f, 0.11f * k), shirt, Key(shirt));
+                Part(PrimitiveType.Sphere, sh, new Vector3(0, -arm * 0.92f, 0), Vector3.one * 0.1f * k, skin, Key(skin));
+                if (side < 0) m.ArmL = sh; else m.ArmR = sh;
+            }
+        }
+
         /// <summary>A kibbutz golf cart (קלנועית) with an old-timer at the wheel in a kova tembel.</summary>
         public static void BuildCart(TrafficVehicle v, Color body, Color shirt, bool basket)
         {

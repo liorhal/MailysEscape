@@ -22,7 +22,7 @@ namespace Maily
         RectTransform _canvas, _root, _mapRect, _miniRoot, _miniContent;
         RawImage _image, _miniImage;
         RenderTexture _rt;
-        Sprite _square, _tri, _circle;
+        Sprite _square, _tri, _circle, _star;
         const float MapSize = 940f, MiniSize = 330f;
 
         /// <summary>One drawing surface (big map or minimap) with its own marker pools.</summary>
@@ -38,6 +38,12 @@ namespace Maily
         void Start()
         {
             _square = Hud.MakeSprite(false); _tri = Hud.MakeSprite(true); _circle = MakeCircle();
+            _star = Board2D.MakeShape(96, (x, y) =>   // five-pointed star: only mini-games use it
+            {
+                float a = Mathf.Atan2(x, y), r = Mathf.Sqrt(x * x + y * y);
+                float k = Mathf.Repeat(a, Mathf.PI * 2f / 5f) / (Mathf.PI * 2f / 5f);    // 0..1 across one point
+                return r <= Mathf.Lerp(0.42f, 0.98f, Mathf.Abs(k - 0.5f) * 2f);
+            });
             Build();
             BuildMini();
             _root.gameObject.SetActive(false);
@@ -66,6 +72,7 @@ namespace Maily
             foreach (var p in Parrot.All) Hide(p);
             foreach (var c in Collectible.All) Hide(c);
             foreach (var v in TrafficVehicle.All) Hide(v);
+            if (Family.I != null) foreach (var f in Family.I.Members) Hide(f);
             cam.Render();
             foreach (var r in hidden) r.enabled = true;
             RenderSettings.fog = fog;
@@ -100,7 +107,7 @@ namespace Maily
             trt.anchoredPosition = new Vector2(-230, -2); trt.sizeDelta = new Vector2(900, 60);
 
             // legend (right side, RTL)
-            var legend = Rect("Legend", _root, Palette.UiPanel, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-40, 0), new Vector2(440, 770));
+            var legend = Rect("Legend", _root, Palette.UiPanel, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-40, 0), new Vector2(440, 830));
             legend.pivot = new Vector2(1f, 0.5f);
             var lt = Label(legend, "מקרא", 40, Palette.CoinGold, TextAlignmentOptions.Right);
             lt.rectTransform.anchorMin = new Vector2(0, 1); lt.rectTransform.anchorMax = new Vector2(1, 1); lt.rectTransform.pivot = new Vector2(0.5f, 1);
@@ -115,7 +122,8 @@ namespace Maily
                 (_square, Palette.BullyRed, "כלב רחוב (סכנה!)"),
                 (_circle, Palette.ParrotGreen, "דררה"),
                 (_circle, Palette.Bone, "חטיף"),
-                (_square, Palette.MiniSky, "משחקון"),
+                (_star, Palette.MiniSky, "משחקון (F) - מסגרת בצבע המדליה"),
+                (_circle, Palette.MiniSky, "המשפחה של מיילי"),
                 (_square, Palette.Silver, "רכב / קלנועית"),
             };
             for (int i = 0; i < rows.Length; i++)
@@ -282,15 +290,22 @@ namespace Maily
             foreach (var s in MiniGameSpot.All)
             {
                 int best = s.BestMedal;
-                Marker(_square, best > 0 ? MiniGameSpot.MedalColor(best) : Palette.UiPaper, s.transform.position, 30f, 45f);
-                Marker(_square, s.Accent, s.transform.position, 22f, 45f);
-                Text(s.Title, s.transform.position, s.Accent, 24f, new Vector2(0, 26));
+                Marker(_star, Palette.UiInk, s.transform.position, 44f);
+                Marker(_star, best > 0 ? MiniGameSpot.MedalColor(best) : Palette.UiPaper, s.transform.position, 38f);
+                Marker(_star, s.Accent, s.transform.position, 28f);
+                Text(s.Title, s.transform.position, s.Accent, 25f, new Vector2(0, -30));
             }
             foreach (var v in TrafficVehicle.All)
             {
                 Marker(_square, Palette.UiInk, v.transform.position, v.IsCart ? 13f : 17f, -v.transform.eulerAngles.y);
                 Marker(_square, v.IsCart ? Palette.WallWhite : Palette.Silver, v.transform.position, v.IsCart ? 9f : 12f, -v.transform.eulerAngles.y);
             }
+            if (Family.I != null)
+                foreach (var f in Family.I.Members)
+                {
+                    Marker(_circle, Palette.UiInk, f.transform.position, 20f);
+                    Marker(_circle, Palette.MiniSky, f.transform.position, 15f);
+                }
             var m = MailyController.I;
             if (m != null)
             {

@@ -67,7 +67,7 @@ namespace Maily
             if (gm.State == GameState.Title) return;
 
             if (gm.State == GameState.Playing) _playTime += Time.deltaTime;
-            if (_playTime > 1.2f) Tell(Beat.Start);
+            if (_playTime > 1.2f && !(Family.I != null && Family.I.IntroActive)) Tell(Beat.Start);
             if (gm.DogsMet >= 1) Tell(Beat.Friend);
             if (gm.ParrotsChased >= 1) Tell(Beat.Parrot);
             if (_haveHome && Vector3.Distance(m.transform.position, _home) > 230f) Tell(Beat.Far);
