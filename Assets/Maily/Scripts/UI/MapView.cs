@@ -10,26 +10,38 @@ namespace Maily
     /// <summary>
     /// Overview map of Kibbutz Hatzor (M). The background is a one-time orthographic render of the real
     /// scene from above; markers show Maily (with heading), home, places, friendly dogs, street dogs,
-    /// dararot, treats and mini-games, with a legend. The world is frozen while the map is open.
+    /// dararot, treats and mini-games, with a legend. A north-up minimap centred on Maily is always shown
+    /// bottom-left while exploring; M enlarges it to the full map (the world is frozen while it is open).
     /// </summary>
     public class MapView : MonoBehaviour
     {
         public float Extent = 640f; // half-width of the mapped square, metres
 
-        RectTransform _root, _mapRect;
-        RawImage _image;
+        public float MiniRange = 170f; // metres shown across the corner minimap
+
+        RectTransform _canvas, _root, _mapRect, _miniRoot, _miniContent;
+        RawImage _image, _miniImage;
         RenderTexture _rt;
         Sprite _square, _tri, _circle;
-        readonly List<Image> _pool = new List<Image>();
-        readonly List<TextMeshProUGUI> _labels = new List<TextMeshProUGUI>();
-        int _used, _labelsUsed;
-        const float MapSize = 940f;
+        const float MapSize = 940f, MiniSize = 330f;
+
+        /// <summary>One drawing surface (big map or minimap) with its own marker pools.</summary>
+        class Layer
+        {
+            public RectTransform Parent; public float Size; public float MarkerScale; public bool Labels;
+            public readonly List<Image> Pool = new List<Image>();
+            public readonly List<TextMeshProUGUI> Texts = new List<TextMeshProUGUI>();
+            public int Used, TextsUsed;
+        }
+        Layer _big, _mini, _cur;
 
         void Start()
         {
             _square = Hud.MakeSprite(false); _tri = Hud.MakeSprite(true); _circle = MakeCircle();
             Build();
+            BuildMini();
             _root.gameObject.SetActive(false);
+            _miniRoot.gameObject.SetActive(false);
         }
 
         // ------------------------------------------------------------------ background render
@@ -58,7 +70,7 @@ namespace Maily
             RenderSettings.fog = fog;
             cam.targetTexture = null;
             Destroy(go);
-            _image.texture = _rt;
+            _image.texture = _rt; _miniImage.texture = _rt;
         }
 
         void OnDestroy() { if (_rt != null) _rt.Release(); }
@@ -71,7 +83,8 @@ namespace Maily
             var canvas = go.AddComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 30;
             var scaler = go.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = 0.5f;
-            _root = (RectTransform)go.transform;
+            _canvas = (RectTransform)go.transform;
+            _root = Rect("Big Map", _canvas, Color.clear, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
 
             Rect("Dim", _root, new Color(Palette.UiInk.r, Palette.UiInk.g, Palette.UiInk.b, 0.97f), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             var frame = Rect("Frame", _root, Palette.UiPaper, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-230, -10), new Vector2(MapSize + 16, MapSize + 16));
@@ -79,7 +92,7 @@ namespace Maily
             _image = _mapRect.gameObject.AddComponent<RawImage>(); _image.color = Color.white; _image.raycastTarget = false;
             // markers live in their own layer above the image
             var layer = Rect("Markers", _mapRect, Color.clear, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            _mapRect = layer;
+            _big = new Layer { Parent = layer, Size = MapSize, MarkerScale = 1f, Labels = true };
 
             var title = Label(_root, "מפת קיבוץ חצור", 54, Palette.CoinGold, TextAlignmentOptions.Center);
             var trt = title.rectTransform; trt.anchorMin = trt.anchorMax = new Vector2(0.5f, 1f); trt.pivot = new Vector2(0.5f, 1f);
@@ -113,9 +126,29 @@ namespace Maily
                 var t = Label(row, rows[i].text, 28, Palette.UiPaper, TextAlignmentOptions.Right);
                 t.margin = new Vector4(10, 0, 84, 0);
             }
-            var hint = Label(legend, "M או Esc לסגירה", 26, new Color(1, 1, 1, 0.6f), TextAlignmentOptions.Center);
+            var hint = Label(legend, "M או Esc לחזרה למשחק", 26, new Color(1, 1, 1, 0.6f), TextAlignmentOptions.Center);
             hint.rectTransform.anchorMin = new Vector2(0, 0); hint.rectTransform.anchorMax = new Vector2(1, 0); hint.rectTransform.pivot = new Vector2(0.5f, 0);
             hint.rectTransform.sizeDelta = new Vector2(0, 50); hint.rectTransform.anchoredPosition = new Vector2(0, 14);
+        }
+
+        /// <summary>Always-on corner minimap: north-up, centred on Maily, clipped to a framed square.</summary>
+        void BuildMini()
+        {
+            _miniRoot = Rect("Minimap", _canvas, Palette.UiPaper, Vector2.zero, Vector2.zero, new Vector2(32, 32), new Vector2(MiniSize + 12, MiniSize + 12));
+            _miniRoot.pivot = Vector2.zero; _miniRoot.anchoredPosition = new Vector2(32, 32);
+            var view = Rect("View", _miniRoot, Palette.Field, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(MiniSize, MiniSize));
+            view.gameObject.AddComponent<RectMask2D>();
+            float content = MiniSize * 2f * Extent / MiniRange;
+            _miniContent = Rect("Content", view, Color.clear, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(content, content));
+            _miniImage = _miniContent.gameObject.AddComponent<RawImage>(); _miniImage.color = Color.white; _miniImage.raycastTarget = false;
+            var layer = Rect("Markers", _miniContent, Color.clear, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            _mini = new Layer { Parent = layer, Size = content, MarkerScale = 0.8f, Labels = false };
+
+            var badge = Rect("North", _miniRoot, Palette.UiInk, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-26, -26), new Vector2(36, 36));
+            var bimg = badge.GetComponent<Image>(); bimg.sprite = _circle; bimg.type = Image.Type.Simple;
+            Label(badge, "צ", 24, Palette.CoinGold, TextAlignmentOptions.Center).fontStyle = FontStyles.Bold;
+            var tag = Rect("Tag", _miniRoot, Palette.UiPanel, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, 24), new Vector2(MiniSize + 12, 40));
+            Label(tag, "M  הגדלת המפה", 24, Palette.UiPaper, TextAlignmentOptions.Center);
         }
 
         RectTransform Rect(string n, RectTransform parent, Color c, Vector2 amin, Vector2 amax, Vector2 pos, Vector2 size)
@@ -165,54 +198,64 @@ namespace Maily
             if (gm.MapOpen && (mKey || esc)) gm.ToggleMap();
             else if (!gm.MapOpen && mKey && gm.State == GameState.Playing && !busy) { RenderBackground(); gm.ToggleMap(); }
 
+            bool miniOn = !gm.MapOpen && gm.State == GameState.Playing;
+            if (miniOn) RenderBackground();
             if (_root.gameObject.activeSelf != gm.MapOpen) _root.gameObject.SetActive(gm.MapOpen);
-            if (gm.MapOpen) DrawMarkers();
+            if (_miniRoot.gameObject.activeSelf != miniOn) _miniRoot.gameObject.SetActive(miniOn);
+            if (gm.MapOpen) DrawMarkers(_big);
+            if (miniOn)
+            {
+                var m = MailyController.I;
+                if (m != null) _miniContent.anchoredPosition = -ToMap(m.transform.position, _mini.Size);
+                DrawMarkers(_mini);
+            }
         }
 
-        Vector2 ToMap(Vector3 w) => new Vector2(w.x / (2f * Extent), w.z / (2f * Extent)) * MapSize;
+        Vector2 ToMap(Vector3 w, float size) => new Vector2(w.x / (2f * Extent), w.z / (2f * Extent)) * size;
 
         Image Marker(Sprite s, Color c, Vector3 world, float size, float rot = 0f)
         {
-            Image img;
-            if (_used < _pool.Count) img = _pool[_used];
+            Image img; var L = _cur; size *= L.MarkerScale;
+            if (L.Used < L.Pool.Count) img = L.Pool[L.Used];
             else
             {
                 var go = new GameObject("M", typeof(RectTransform));
-                go.transform.SetParent(_mapRect, false);
+                go.transform.SetParent(L.Parent, false);
                 img = go.AddComponent<Image>(); img.raycastTarget = false;
                 var rt0 = img.rectTransform; rt0.anchorMin = rt0.anchorMax = new Vector2(0.5f, 0.5f);
-                _pool.Add(img);
+                L.Pool.Add(img);
             }
-            _used++;
+            L.Used++;
             img.gameObject.SetActive(true);
             img.sprite = s; img.color = c; img.type = Image.Type.Simple;
-            var rt = img.rectTransform; rt.anchoredPosition = ToMap(world); rt.sizeDelta = new Vector2(size, size); rt.localRotation = Quaternion.Euler(0, 0, rot);
+            var rt = img.rectTransform; rt.anchoredPosition = ToMap(world, L.Size); rt.sizeDelta = new Vector2(size, size); rt.localRotation = Quaternion.Euler(0, 0, rot);
             img.transform.SetAsLastSibling();
             return img;
         }
 
         void Text(string s, Vector3 world, Color c, float size, Vector2 offset)
         {
+            var L = _cur; if (!L.Labels) return;
             TextMeshProUGUI t;
-            if (_labelsUsed < _labels.Count) t = _labels[_labelsUsed];
+            if (L.TextsUsed < L.Texts.Count) t = L.Texts[L.TextsUsed];
             else
             {
-                t = Label(_mapRect, "", size, c, TextAlignmentOptions.Center);
+                t = Label(L.Parent, "", size, c, TextAlignmentOptions.Center);
                 var rt0 = t.rectTransform; rt0.anchorMin = rt0.anchorMax = new Vector2(0.5f, 0.5f); rt0.sizeDelta = new Vector2(300, 40);
                 t.outlineWidth = 0.28f; t.outlineColor = new Color32(30, 28, 34, 255);
-                _labels.Add(t);
+                L.Texts.Add(t);
             }
-            _labelsUsed++;
+            L.TextsUsed++;
             t.gameObject.SetActive(true);
             t.fontSize = size; t.color = c;
             Heb.Set(t, s);
-            t.rectTransform.anchoredPosition = ToMap(world) + offset;
+            t.rectTransform.anchoredPosition = ToMap(world, L.Size) + offset;
             t.transform.SetAsLastSibling();
         }
 
-        void DrawMarkers()
+        void DrawMarkers(Layer layer)
         {
-            _used = 0; _labelsUsed = 0;
+            _cur = layer; layer.Used = 0; layer.TextsUsed = 0;
             foreach (var c in Collectible.All) Marker(_circle, c.IsCoin ? Palette.CoinGold : Palette.Bone, c.transform.position, 7f);
             foreach (var l in Landmark.All)
             {
@@ -248,8 +291,9 @@ namespace Maily
                 Marker(_tri, Palette.UiInk, m.transform.position, 40f * pulse, -m.transform.eulerAngles.y);
                 Marker(_tri, Palette.CoinGold, m.transform.position, 30f * pulse, -m.transform.eulerAngles.y);
             }
-            for (int i = _used; i < _pool.Count; i++) _pool[i].gameObject.SetActive(false);
-            for (int i = _labelsUsed; i < _labels.Count; i++) _labels[i].gameObject.SetActive(false);
+            for (int i = layer.Used; i < layer.Pool.Count; i++) layer.Pool[i].gameObject.SetActive(false);
+            for (int i = layer.TextsUsed; i < layer.Texts.Count; i++) layer.Texts[i].gameObject.SetActive(false);
+            _cur = null;
         }
     }
 }
