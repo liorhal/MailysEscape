@@ -64,7 +64,8 @@
       script.onload = function () {
         createUnityInstance(canvas, config, function (progress) {
           document.querySelector("#fill").style.width = (100 * progress) + "%";
-        }).then(function () {
+        }).then(function (instance) {
+          window.unityInstance = instance; // lets tests call into the game (unityInstance.SendMessage)
           document.querySelector("#loading").style.display = "none";
           canvas.focus();
         }).catch(function (message) { showBanner(message, "error"); });
