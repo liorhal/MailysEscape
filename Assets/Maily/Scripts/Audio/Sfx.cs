@@ -18,6 +18,7 @@ namespace Maily
         public static Sfx I { get; private set; }
 
         public AudioClip Pickup, Coin, Sting, Bark, Yip, Squawk, Click, Ambient, Music, Hop, Heart;
+        public AudioClip Growl, Hit, HitHeavy, Block, Whoosh, Gong;
         AudioSource _music, _ambient;
         readonly List<AudioSource> _pool = new List<AudioSource>();
         float _duck = 1f;
@@ -48,6 +49,22 @@ namespace Maily
             Click = Make("Click", 0.025f, (t, d) => Noise(rnd) * Decay(t, 0.025f) * 0.6f);
             Hop = Make("Hop", 0.12f, (t, d) => Sine(Mathf.Lerp(300, 520, t / 0.12f), t) * Decay(t, 0.12f) * 0.5f);
             Heart = Make("Heart", 0.4f, (t, d) => (Sine(784, t) * Decay(t, 0.18f) + (t > 0.12f ? Sine(1046.5f, t) * Decay(t - 0.12f, 0.28f) : 0)) * 0.5f);
+            // ---- fight sounds ----
+            Growl = Make("Growl", 0.9f, (t, d) =>
+            {
+                float trem = 0.6f + 0.4f * Mathf.Sin(t * 2 * Mathf.PI * 23f);
+                float f = 85f + Mathf.Sin(t * 7f) * 8f;
+                return (Saw(f, t) * 0.5f + Saw(f * 1.5f, t) * 0.2f + Noise(rnd) * 0.35f) * trem * Env(t, 0.9f, 0.08f) * 0.8f;
+            });
+            Hit = Make("Hit", 0.16f, (t, d) => (Sine(Mathf.Lerp(220f, 80f, t / 0.16f), t) * 0.8f + Noise(rnd) * Decay(t, 0.05f) * 0.6f) * Decay(t, 0.16f));
+            HitHeavy = Make("HitHeavy", 0.32f, (t, d) => (Sine(Mathf.Lerp(160f, 45f, t / 0.32f), t) + Noise(rnd) * Decay(t, 0.08f) * 0.8f) * Decay(t, 0.32f) * 0.95f);
+            Block = Make("Block", 0.12f, (t, d) => (Sq(320f, t) * 0.3f + Noise(rnd) * 0.5f) * Decay(t, 0.06f));
+            Whoosh = Make("Whoosh", 0.22f, (t, d) =>
+            {
+                float n = Noise(rnd); float sweep = Mathf.Sin(Mathf.PI * t / 0.22f);
+                return n * sweep * 0.35f;
+            });
+            Gong = Make("Gong", 1.6f, (t, d) => (Sine(110f, t) * 0.6f + Sine(221.5f, t) * 0.35f + Sine(332f, t) * 0.25f + Sine(447f, t) * 0.15f) * Decay(t, 1.6f) * 0.7f);
             Ambient = MakeAmbient(rnd);
             Music = MakeMusic();
 

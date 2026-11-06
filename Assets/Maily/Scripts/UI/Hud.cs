@@ -13,7 +13,7 @@ namespace Maily
     {
         Canvas _canvas;
         RectTransform _title, _hud, _pause, _end;
-        TextMeshProUGUI _prompt, _treats, _dogs, _parrots, _timer, _toast, _endTime, _endStats, _friendHint, _parrotHint;
+        TextMeshProUGUI _prompt, _treats, _dogs, _parrots, _bullies, _timer, _toast, _endTime, _endStats, _friendHint, _parrotHint;
         Image _fade, _friendArrow, _parrotArrow;
         CanvasGroup _toastGroup, _controlsGroup;
         float _toastT = 99f, _fadeA, _controlsT;
@@ -48,10 +48,11 @@ namespace Maily
 
             // ---- HUD (mirrored for right-to-left reading) ----
             _hud = Panel("HUD", root, Color.clear);
-            var goals = Panel("Goals", _hud, Palette.UiPanel, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-32, -32), new Vector2(430, 190), new Vector2(1, 1));
+            var goals = Panel("Goals", _hud, Palette.UiPanel, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-32, -32), new Vector2(430, 244), new Vector2(1, 1));
             _treats = GoalRow(goals, 0, Palette.Bone);
             _dogs = GoalRow(goals, 1, Palette.DogBrown);
             _parrots = GoalRow(goals, 2, Palette.ParrotGreen);
+            _bullies = GoalRow(goals, 3, Palette.BullyRed);
             var timerBox = Panel("Timer", _hud, Palette.UiPanel, new Vector2(0, 1), new Vector2(0, 1), new Vector2(32, -32), new Vector2(200, 72), new Vector2(0, 1));
             _timer = Text(timerBox, "0:00", 40, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Bold);
 
@@ -82,7 +83,7 @@ namespace Maily
             _prompt = Text(_title, "לחצו על מקש כלשהו", 36, new Color(Palette.UiPaper.r, Palette.UiPaper.g, Palette.UiPaper.b, 0.7f), TextAlignmentOptions.Center, FontStyles.Bold);
             _prompt.characterSpacing = 12;
             _prompt.rectTransform.anchorMin = new Vector2(0, 0.22f); _prompt.rectTransform.anchorMax = new Vector2(1, 0.28f);
-            var goalsLine = Text(_title, "אספו 50 חטיפים · הכירו את 8 כלבי הקיבוץ · רדפו אחרי 6 דררות ירוקות", 32, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Normal);
+            var goalsLine = Text(_title, "אספו 50 חטיפים · הכירו 8 כלבים · רדפו אחרי 6 דררות · נצחו 3 כלבי רחוב", 32, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Normal);
             goalsLine.rectTransform.anchorMin = new Vector2(0, 0.12f); goalsLine.rectTransform.anchorMax = new Vector2(1, 0.18f);
 
             // ---- Pause ----
@@ -180,7 +181,7 @@ namespace Maily
             track.GetComponent<Image>().raycastTarget = true;
         }
 
-        static Sprite MakeSprite(bool triangle)
+        internal static Sprite MakeSprite(bool triangle)
         {
             const int n = 64; var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
             var px = new Color32[n * n];
@@ -237,14 +238,14 @@ namespace Maily
         {
             var s = GameManager.I.State;
             _title.gameObject.SetActive(s == GameState.Title);
-            _hud.gameObject.SetActive(s == GameState.Playing || s == GameState.Paused);
+            _hud.gameObject.SetActive(s == GameState.Playing || (s == GameState.Paused && !GameManager.I.PausedFromFight));
             _pause.gameObject.SetActive(s == GameState.Paused);
             _end.gameObject.SetActive(s == GameState.Ended);
             if (s == GameState.Ended)
             {
                 var gm = GameManager.I;
                 Heb.Set(_endTime, $"זמן {GameManager.FormatTime(gm.RunTime)}      שיא {GameManager.FormatTime(gm.BestTime)}");
-                Heb.Set(_endStats, $"{gm.Treats} חטיפים · {gm.Coins} מטבעות · {gm.DogsMet} חברים חדשים · {gm.ParrotsChased} דררות");
+                Heb.Set(_endStats, $"{gm.Treats} חטיפים · {gm.Coins} מטבעות · {gm.DogsMet} חברים חדשים · {gm.ParrotsChased} דררות · {gm.BulliesBeaten} ניצחונות");
             }
             Refresh();
         }
@@ -255,6 +256,7 @@ namespace Maily
             Row(_treats, "חטיפים", gm.Treats, gm.TreatGoal);
             Row(_dogs, "חברים", gm.DogsMet, gm.DogGoal);
             Row(_parrots, "דררות", gm.ParrotsChased, gm.ParrotGoal);
+            Row(_bullies, "כלבי רחוב", gm.BulliesBeaten, gm.BullyGoal);
         }
 
         static void Row(TextMeshProUGUI t, string label, int v, int goal)

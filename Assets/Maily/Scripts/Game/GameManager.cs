@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 namespace Maily
 {
-    public enum GameState { Title, Playing, Paused, Ended }
+    public enum GameState { Title, Playing, Paused, Ended, Fighting }
 
     /// <summary>One state machine for the whole shell + the three goals of Maily's escape.</summary>
     public class GameManager : MonoBehaviour
@@ -15,8 +15,11 @@ namespace Maily
         public int TreatGoal = 50;
         public int DogGoal = 8;
         public int ParrotGoal = 6;
+        public int BullyGoal = 3;
 
         public GameState State { get; private set; } = GameState.Title;
+        public int BulliesBeaten { get; private set; }
+        GameState _resumeState = GameState.Playing;
         public int Treats { get; private set; }
         public int Coins { get; private set; }
         public int DogsMet { get; private set; }
@@ -31,6 +34,9 @@ namespace Maily
         public bool TreatsDone => Treats >= TreatGoal;
         public bool DogsDone => DogsMet >= DogGoal;
         public bool ParrotsDone => ParrotsChased >= ParrotGoal;
+        public bool BulliesDone => BulliesBeaten >= BullyGoal;
+        public bool InWorld => State == GameState.Playing || State == GameState.Fighting;
+        public bool PausedFromFight => State == GameState.Paused && _resumeState == GameState.Fighting;
 
         void Awake()
         {
@@ -43,7 +49,7 @@ namespace Maily
 
         void Update()
         {
-            if (State == GameState.Playing) RunTime += Time.deltaTime;
+            if (InWorld) RunTime += Time.deltaTime;
         }
 
         public void StartGame()
@@ -55,9 +61,23 @@ namespace Maily
 
         public void TogglePause()
         {
-            if (State == GameState.Playing) SetState(GameState.Paused);
-            else if (State == GameState.Paused) SetState(GameState.Playing);
+            if (InWorld) { _resumeState = State; SetState(GameState.Paused); }
+            else if (State == GameState.Paused) SetState(_resumeState);
         }
+
+        // ---- street-dog fights ----
+        public void EnterFight() { if (State == GameState.Playing) SetState(GameState.Fighting); }
+        public void ExitFight() { if (State == GameState.Fighting) SetState(GameState.Playing); }
+
+        public void BeatBully(string name)
+        {
+            BulliesBeaten++;
+            Say(BulliesBeaten == BullyGoal ? $"מיילי ניצחה את {name}! אף כלב רחוב לא יציק לה יותר!" : $"מיילי ניצחה את {name}!");
+            Sfx.I?.Play2D(Sfx.I.Sting, 0.9f);
+            Changed?.Invoke(); CheckWin();
+        }
+
+        public void LostFight(string name) => Say($"{name} ניצח הפעם... מיילי חוזרת הביתה להתאושש");
 
         public void Restart()
         {
@@ -113,7 +133,7 @@ namespace Maily
 
         void CheckWin()
         {
-            if (!(TreatsDone && DogsDone && ParrotsDone)) return;
+            if (!(TreatsDone && DogsDone && ParrotsDone && BulliesDone)) return;
             if (BestTime <= 0f || RunTime < BestTime) { PlayerPrefs.SetFloat("BestTime", RunTime); PlayerPrefs.Save(); }
             Sfx.I?.Play2D(Sfx.I.Sting, 1f, 1.12f);
             SetState(GameState.Ended);

@@ -24,6 +24,9 @@ namespace Maily
 
         public float Phase { get; private set; }   // 0..1 stride cycle
 
+        // fight poses, written by FightManager each frame (0..1)
+        [System.NonSerialized] public float FightLunge, FightCrouch, FightHurt;
+
         // phase offsets: trot = diagonal pairs, gallop = hinds then fronts (rotary-ish)
         static readonly float[] TrotOff = { 0.0f, 0.5f, 0.5f, 0.0f };
         static readonly float[] GallopOff = { 0.55f, 0.65f, 0.0f, 0.1f };
@@ -119,6 +122,29 @@ namespace Maily
             // + rotation about x swings the hanging tail backward and up
             float lift = Mathf.Lerp(0f, 38f, _amp) + 10f * _wag + Mathf.Sin(Phase * tau + 2f) * 6f * _amp;
             Tail.localRotation = _tailRest * Quaternion.Euler(lift, _tailSwing, 0f);
+
+            ApplyFightPose();
+        }
+
+        /// <summary>Layered on top of the gait: lunge (bite / pounce), crouch (block), hurt (recoil).</summary>
+        void ApplyFightPose()
+        {
+            float l = FightLunge, c = FightCrouch, h = FightHurt;
+            if (l + c + h < 0.001f) return;
+            // lunge: body thrusts forward, head snaps down-and-out, fronts reach, hinds push
+            Pelvis.localPosition += new Vector3(0f, -c * 0.12f + l * 0.02f, l * 0.16f);
+            Chest.localRotation *= Quaternion.Euler(l * 8f + c * 6f - h * 10f, 0f, 0f);
+            Head.localRotation *= Quaternion.Euler(l * 22f + c * 14f - h * 24f, 0f, 0f);
+            for (int i = 0; i < 4; i++)
+            {
+                bool front = i < 2;
+                float reach = front ? -l * 42f : l * 30f;
+                float crouchUp = front ? -c * 18f : c * 22f;
+                Upper[i].localRotation *= Quaternion.Euler(reach + crouchUp, 0f, 0f);
+                Lower[i].localRotation *= Quaternion.Euler(front ? c * 30f + l * 15f : -c * 30f, 0f, 0f);
+            }
+            // ears-back flinch reads through the tail: tucked when hurt, low when crouching
+            Tail.localRotation *= Quaternion.Euler(-h * 30f - c * 15f, 0f, 0f);
         }
     }
 }

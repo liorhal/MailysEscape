@@ -49,11 +49,12 @@ namespace Maily.EditorTools
             int dogs = SpawnDogs(world, rnd, gameplay, spawn);
             int parrots = SpawnParrots(world, rnd, gameplay, spawn);
             int treats = SpawnTreats(world, rnd, gameplay, spawn);
-            log.AppendLine($"Spawned: Maily @ {spawn}, {dogs} dogs, {parrots} parrots, {treats} treats");
+            int bullies = SpawnBullies(world, rnd, gameplay, spawn);
+            log.AppendLine($"Spawned: Maily @ {spawn}, {dogs} dogs, {parrots} parrots, {treats} treats, {bullies} street dogs");
 
             var systems = new GameObject("Systems");
             var gm = systems.AddComponent<GameManager>();
-            gm.TreatGoal = Mathf.Min(50, treats); gm.DogGoal = dogs; gm.ParrotGoal = Mathf.Min(6, parrots);
+            gm.TreatGoal = Mathf.Min(50, treats); gm.DogGoal = dogs; gm.ParrotGoal = Mathf.Min(6, parrots); gm.BullyGoal = bullies;
             systems.AddComponent<Sfx>();
             var fx = systems.AddComponent<Fx>();
             fx.ParticleMat = ParticleMaterial();
@@ -62,6 +63,14 @@ namespace Maily.EditorTools
             systems.AddComponent<Hud>();
             systems.AddComponent<PlayerIdentity>();
             SetupCameras(systems, maily, spawnYaw);
+
+            // street-dog fights: manager, overlay and the side-view fight camera
+            var fm = systems.AddComponent<FightManager>();
+            systems.AddComponent<FightHud>();
+            var fcGo = new GameObject("Fight Camera");
+            var fc = fcGo.AddComponent<CinemachineCamera>();
+            var fl = LensSettings.Default; fl.FieldOfView = 45f; fl.NearClipPlane = 0.1f; fl.FarClipPlane = 1500f; fc.Lens = fl;
+            fc.Priority = 0; fm.FightCam = fc;
 
             EnsureFolder("Assets/Maily/Scenes");
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -325,6 +334,31 @@ namespace Maily.EditorTools
                 p.transform.SetPositionAndRotation(picks[i], Quaternion.Euler(0, rnd.Next(360), 0));
                 var parrot = p.AddComponent<Parrot>();
                 CharacterKit.BuildParrot(parrot);
+            }
+            return picks.Count;
+        }
+
+        static int SpawnBullies(KibbutzBuilder.Result w, System.Random rnd, Transform parent, Vector3 spawn)
+        {
+            // big open lawns, far from Maily's home and from the friendly dogs
+            var friends = Object.FindObjectsByType<NpcDog>(FindObjectsInactive.Include).Select(d => d.transform.position).ToList();
+            var pts = LawnPoints(w, rnd, 3, "park", "grass", "pitch", "village_green", "meadow")
+                .Where(p => (p - spawn).magnitude > 90f && friends.All(f => (f - p).magnitude > 40f) && Free(p, 1.2f)).ToList();
+            var picks = Spread(pts, CharacterKit.Bullies.Length, 140f, spawn, 90f, rnd);
+            // personality: hp, aggression, block, reaction, damage, speed
+            float[,] traits = { { 110f, 0.50f, 0.20f, 0.45f, 1.15f, 0.80f },   // בולדוזר — heavy hitter, slow
+                                { 90f,  0.70f, 0.35f, 0.30f, 0.90f, 1.25f },   // צלקת — fast, sneaky
+                                { 130f, 0.75f, 0.45f, 0.25f, 1.20f, 1.00f } }; // רעם — the boss
+            for (int i = 0; i < picks.Count; i++)
+            {
+                var look = CharacterKit.Bullies[i];
+                var go = new GameObject("Street Dog " + look.Name);
+                go.transform.SetParent(parent);
+                go.transform.SetPositionAndRotation(picks[i], Quaternion.Euler(0, rnd.Next(360), 0));
+                var dog = go.AddComponent<HostileDog>();
+                CharacterKit.BuildBully(dog, look);
+                dog.MaxHp = traits[i, 0]; dog.Aggression = traits[i, 1]; dog.BlockChance = traits[i, 2];
+                dog.ReactTime = traits[i, 3]; dog.DamageMul = traits[i, 4]; dog.SpeedMul = traits[i, 5];
             }
             return picks.Count;
         }

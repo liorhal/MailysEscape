@@ -40,10 +40,21 @@ namespace Maily
 
         static string Key(Color c) => "C_" + ColorUtility.ToHtmlStringRGB(c);
 
-        /// <summary>Builds a dog under root (forward = +Z). Fills the NpcDog rig references.</summary>
+        /// <summary>Rig references of a primitive dog. Legs order: FL, FR, HL, HR.</summary>
+        public struct DogParts { public Transform Body, Head, Tail, EarL, EarR; public Transform[] Legs; }
+
+        /// <summary>Builds a friendly kibbutz dog. Fills the NpcDog rig references.</summary>
         public static void BuildDog(NpcDog dog, DogLook look)
         {
-            var root = dog.transform; float s = look.Size;
+            var p = BuildDogParts(dog.transform, look);
+            dog.Body = p.Body; dog.Head = p.Head; dog.Tail = p.Tail; dog.EarL = p.EarL; dog.EarR = p.EarR; dog.Legs = p.Legs;
+            dog.DogName = look.Name; dog.Size = look.Size;
+        }
+
+        /// <summary>Builds a dog body under root (forward = +Z).</summary>
+        public static DogParts BuildDogParts(Transform root, DogLook look)
+        {
+            var parts = new DogParts(); float s = look.Size;
             string P = Key(look.Primary), S = Key(look.Secondary), D = Key(Palette.DogBlack);
             var body = Pivot("Body", root, new Vector3(0, 0.5f * s, 0));
             Part(PrimitiveType.Sphere, body, Vector3.zero, new Vector3(0.42f, 0.4f, 0.78f) * s, look.Primary, P);
@@ -62,10 +73,10 @@ namespace Maily
                     Part(PrimitiveType.Cube, ear, new Vector3(0.01f * side, 0.09f, 0) * s, new Vector3(0.09f, 0.18f, 0.04f) * s, look.Primary, P, new Vector3(0, 0, -12 * side));
                 else
                     Part(PrimitiveType.Sphere, ear, new Vector3(0.05f * side, -0.07f, 0) * s, new Vector3(0.07f, 0.2f, 0.13f) * s, look.Secondary == Palette.DogWhite ? look.Primary : look.Secondary, look.Secondary == Palette.DogWhite ? P : S, new Vector3(0, 0, 18 * side));
-                if (side < 0) dog.EarL = ear; else dog.EarR = ear;
+                if (side < 0) parts.EarL = ear; else parts.EarR = ear;
             }
 
-            dog.Legs = new Transform[4];
+            parts.Legs = new Transform[4];
             int i = 0;
             for (int fz = 1; fz >= -1; fz -= 2)
                 for (int sx = -1; sx <= 1; sx += 2)
@@ -73,13 +84,53 @@ namespace Maily
                     var hip = Pivot("Leg", root, new Vector3(0.13f * sx, 0.38f * s, 0.22f * fz * s), new Vector3(0, 0, 3 * sx));
                     Part(PrimitiveType.Capsule, hip, new Vector3(0, -0.17f * s, 0), new Vector3(0.11f, 0.19f, 0.11f) * s, look.Primary, P);
                     Part(PrimitiveType.Sphere, hip, new Vector3(0, -0.35f * s, 0.02f * s), Vector3.one * 0.09f * s, look.Secondary, S); // paw (0.8× taper)
-                    dog.Legs[i++] = hip;
+                    parts.Legs[i++] = hip;
                 }
 
             var tail = Pivot("Tail", body, new Vector3(0, 0.12f, -0.36f) * s, new Vector3(look.CurlyTail ? -70 : -40, 0, 0));
             Part(PrimitiveType.Capsule, tail, new Vector3(0, 0.16f, 0) * s, new Vector3(0.07f, 0.17f, 0.07f) * s, look.Primary, P);
             Part(PrimitiveType.Sphere, tail, new Vector3(0, 0.32f, 0) * s, Vector3.one * 0.08f * s, look.Secondary, S);
-            dog.Body = body; dog.Head = head; dog.Tail = tail; dog.DogName = look.Name; dog.Size = s;
+            parts.Body = body; parts.Head = head; parts.Tail = tail;
+            return parts;
+        }
+
+        // ---- street dogs ----
+        public static readonly DogLook[] Bullies =
+        {
+            new DogLook("בולדוזר", Palette.BullyCoat1, Palette.BullyMuzzle, 1.1f,  false, false), // Bulldozer: big, slow, hits hard
+            new DogLook("צלקת",    Palette.BullyCoat2, Palette.BullyMuzzle, 0.92f, true,  false), // Scar: fast and sneaky
+            new DogLook("רעם",     Palette.BullyCoat3, Palette.BullyCoat2,  1.25f, true,  false), // Thunder: the boss
+        };
+
+        /// <summary>Builds a street dog: scruffy coat, glowing red eyes, studded collar, hackles.</summary>
+        public static void BuildBully(HostileDog dog, DogLook look)
+        {
+            var p = BuildDogParts(dog.transform, look);
+            float s = look.Size;
+            string R = Key(Palette.BullyRed), Sp = Key(Palette.Spike), Bk = Key(Palette.DogBlack), P = Key(look.Primary);
+            // angry red eyes (glow — the danger accent) under heavy brows
+            Part(PrimitiveType.Sphere, p.Head, new Vector3(-0.08f, 0.05f, 0.155f) * s, Vector3.one * 0.055f * s, Palette.BullyRed, R, default, 2.5f);
+            Part(PrimitiveType.Sphere, p.Head, new Vector3(0.08f, 0.05f, 0.155f) * s, Vector3.one * 0.055f * s, Palette.BullyRed, R, default, 2.5f);
+            Part(PrimitiveType.Cube, p.Head, new Vector3(-0.08f, 0.095f, 0.15f) * s, new Vector3(0.1f, 0.025f, 0.04f) * s, look.Primary, P, new Vector3(0, 0, -20));
+            Part(PrimitiveType.Cube, p.Head, new Vector3(0.08f, 0.095f, 0.15f) * s, new Vector3(0.1f, 0.025f, 0.04f) * s, look.Primary, P, new Vector3(0, 0, 20));
+            // bared teeth
+            Part(PrimitiveType.Cube, p.Head, new Vector3(-0.035f, -0.11f, 0.24f) * s, new Vector3(0.025f, 0.04f, 0.025f) * s, Palette.Bone, "Bone");
+            Part(PrimitiveType.Cube, p.Head, new Vector3(0.035f, -0.11f, 0.24f) * s, new Vector3(0.025f, 0.04f, 0.025f) * s, Palette.Bone, "Bone");
+            // studded collar around the neck
+            var collarC = new Vector3(0, 0.2f, 0.3f) * s; var collarQ = Quaternion.Euler(-55, 0, 0);
+            Part(PrimitiveType.Cylinder, p.Body, collarC, new Vector3(0.3f, 0.025f, 0.3f) * s, Palette.DogBlack, Bk, collarQ.eulerAngles);
+            for (int k = 0; k < 7; k++)
+            {
+                // spikes sit on the body (uniform scale) around the collar ring, pointing outward
+                float a = k / 7f * Mathf.PI * 2f;
+                var dir = collarQ * new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                Part(PrimitiveType.Cube, p.Body, collarC + dir * 0.155f * s, new Vector3(0.022f, 0.022f, 0.05f) * s, Palette.Spike, Sp, Quaternion.LookRotation(dir).eulerAngles);
+            }
+            // raised hackles along the back
+            for (int k = 0; k < 4; k++)
+                Part(PrimitiveType.Cube, p.Body, new Vector3(0, 0.2f, 0.12f - k * 0.1f) * s, new Vector3(0.05f, 0.08f, 0.05f) * s, look.Primary, P, new Vector3(20, 45, 0));
+            dog.Body = p.Body; dog.Head = p.Head; dog.Tail = p.Tail; dog.Legs = p.Legs;
+            dog.DogName = look.Name; dog.Size = s;
         }
 
         public static void BuildParrot(Parrot p)

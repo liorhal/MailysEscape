@@ -50,6 +50,13 @@ namespace Maily
         public static readonly Color ParrotGreen = H("#46C34A"); // drara
         public static readonly Color ParrotDeep  = H("#2E8F3A");
         public static readonly Color ParrotBeak  = H("#D8343A");
+        // street dogs (hostile) — scruffy, dusty, one danger accent
+        public static readonly Color BullyRed    = H("#E2493B"); // danger accent: eyes, HUD
+        public static readonly Color BullyCoat1  = H("#4A3B33"); // dark brindle
+        public static readonly Color BullyCoat2  = H("#6E6A66"); // dusty gray
+        public static readonly Color BullyCoat3  = H("#1F1C1B"); // near-black
+        public static readonly Color BullyMuzzle = H("#9C8A78");
+        public static readonly Color Spike       = H("#C9CCD1"); // studded collar
 
         // Shadow & accents
         public static readonly Color Shadow      = H("#5E6F8C"); // cool slate

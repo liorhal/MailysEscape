@@ -42,8 +42,9 @@ namespace Maily
             }
 
             bool playing = gm.State == GameState.Playing;
-            Cursor.lockState = playing ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !playing;
+            bool locked = playing || gm.State == GameState.Fighting; // fights are keyboard / pad only
+            Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = !locked;
             if (!playing) return;
 
             Vector2 look2 = Vector2.zero;

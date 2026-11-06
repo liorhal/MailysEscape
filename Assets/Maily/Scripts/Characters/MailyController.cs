@@ -22,10 +22,20 @@ namespace Maily
         CharacterController _cc;
         float _vy, _barkCooldown, _coyote;
 
+        /// <summary>While true, the fight system positions Maily and feeds her motion (see SetFightMotion).</summary>
+        public bool FightLock { get; set; }
+
         void Awake() { I = this; _cc = GetComponent<CharacterController>(); }
+
+        /// <summary>Fight mode: report the motion the fighter applied, so gait / body animation follow it.</summary>
+        public void SetFightMotion(Vector3 velocity, bool grounded) { Velocity = velocity; Grounded = grounded; }
+        public void RaiseJumped() => Jumped?.Invoke();
+        public void RaiseLanded() => Landed?.Invoke();
+        public void RaiseBarked() => Barked?.Invoke();
 
         void Update()
         {
+            if (FightLock) return;
             var gm = GameManager.I;
             bool active = gm == null || gm.State == GameState.Playing;
             Vector2 input = Vector2.zero; bool jump = false, sprint = false, bark = false;
