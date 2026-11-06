@@ -65,6 +65,7 @@ namespace Maily
             var gm = GameManager.I; var m = MailyController.I;
             if (gm == null || m == null) return;
             if (gm.State == GameState.Title) return;
+            if (HouseInterior.I != null && HouseInterior.I.Active) { if (_show >= 0f) { _show = -1f; _page.gameObject.SetActive(false); } return; } // inside: no story pages
 
             if (gm.State == GameState.Playing) _playTime += Time.deltaTime;
             if (_playTime > 1.2f && !(Family.I != null && Family.I.IntroActive)) Tell(Beat.Start);
@@ -78,11 +79,7 @@ namespace Maily
             if (gm.BulliesBeaten >= 1) Tell(Beat.Bully);
             if (_playTime > 240f) Tell(Beat.Search);
             if (gm.Treats >= Mathf.Max(1, gm.TreatGoal / 2)) Tell(Beat.Half);
-            bool won = gm.TreatsDone && gm.DogsDone && gm.ParrotsDone && gm.BulliesDone;
-            if (gm.State == GameState.Ended && won && !_told.Contains(Beat.End))
-            {
-                _told.Add(Beat.End); _queue.Clear(); _show = -1f; Show(Beat.End); // the last page, straight away
-            }
+            // the endings carry their own closing text (the end screen), so no bedtime page here
 
             // only between the action: no fights, board games, map or pause
             bool quiet = gm.State == GameState.Playing && !gm.MapOpen && (mg == null || mg.Current == MiniGameManager.Phase.Idle);

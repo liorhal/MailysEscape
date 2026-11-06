@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 namespace Maily
 {
-    public enum GameState { Title, Playing, Paused, Ended, Fighting }
+    public enum GameState { Title, Playing, Paused, Ended, Fighting, Cutscene }
 
     /// <summary>One state machine for the whole shell + the three goals of Maily's escape.</summary>
     public class GameManager : MonoBehaviour
@@ -36,6 +36,7 @@ namespace Maily
         public bool ParrotsDone => ParrotsChased >= ParrotGoal;
         public bool BulliesDone => BulliesBeaten >= BullyGoal;
         public bool InWorld => State == GameState.Playing || State == GameState.Fighting;
+        public bool InCutscene => State == GameState.Cutscene;
         public bool PausedFromFight => State == GameState.Paused && _resumeState == GameState.Fighting;
 
         /// <summary>Overview map: freezes the world while open (only from free exploration).</summary>
@@ -151,9 +152,35 @@ namespace Maily
         void CheckWin()
         {
             if (!(TreatsDone && DogsDone && ParrotsDone && BulliesDone)) return;
+            if (State != GameState.Playing) return;
             if (BestTime <= 0f || RunTime < BestTime) { PlayerPrefs.SetFloat("BestTime", RunTime); PlayerPrefs.Save(); }
             Sfx.I?.Play2D(Sfx.I.Sting, 1f, 1.12f);
+            // stage 1 done without being caught: the dogs' revenge, then the great chase
+            if (Finale.I != null) { SetState(GameState.Cutscene); Finale.I.Begin(); }
+            else EndGame("free", "חופשית!", "מיילי השלימה את כל המשימות.");
+        }
+
+        // ---- endings ----
+        public static readonly string[] EndingIds = { "runaway", "free", "caught" };
+        public string EndingId { get; private set; } = "";
+        public string EndingTitle { get; private set; } = "";
+        public string EndingText { get; private set; } = "";
+        public int EndingsFound { get { int n = 0; foreach (var id in EndingIds) if (PlayerPrefs.GetInt("Ending_" + id, 0) == 1) n++; return n; } }
+
+        /// <summary>Finish the game with one of the endings (see EndingIds).</summary>
+        public void EndGame(string id, string title, string text)
+        {
+            EndingId = id; EndingTitle = title; EndingText = text;
+            PlayerPrefs.SetInt("Ending_" + id, 1); PlayerPrefs.Save();
+            Sfx.I?.Play2D(Sfx.I.Sting, 1f, id == "caught" ? 0.85f : 1.12f);
             SetState(GameState.Ended);
+        }
+
+        /// <summary>Cutscenes and the runner: the world keeps running, but the HUD, map and player input step aside.</summary>
+        public void SetCutscene(bool on)
+        {
+            if (on && (State == GameState.Playing || State == GameState.Fighting)) SetState(GameState.Cutscene);
+            else if (!on && State == GameState.Cutscene) SetState(GameState.Playing);
         }
 
         public static string FormatTime(float t) => $"{(int)(t / 60)}:{(int)(t % 60):00}";

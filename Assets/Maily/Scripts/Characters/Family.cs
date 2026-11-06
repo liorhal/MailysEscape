@@ -6,9 +6,10 @@ namespace Maily
 {
     /// <summary>
     /// Maily's family. The game opens on a short scene at the garden gate: the family steps out, sees Maily by
-    /// the open gate, calls her, and she bolts, with the family running after her. They keep chasing until she
-    /// outruns them (Shift to sprint). If they catch her, they carry her home and she starts again from the
-    /// gate. Back home they stand by the door, and if Maily comes close again the chase is back on.
+    /// the open gate, calls her, and she bolts, with the family running after her. They are a bit slower than
+    /// her, and she has to stay free for 20 seconds; then they give up. If they catch her, they carry her into
+    /// the house (HouseInterior), and getting out of there ends the game. Back home they stand by the door, and
+    /// if Maily comes close again the 20-second chase starts over.
     /// </summary>
     public class Family : MonoBehaviour
     {
@@ -21,6 +22,8 @@ namespace Maily
         public bool IntroActive { get; private set; }
         public bool Chasing { get; private set; }
         public int Catches { get; private set; }
+        /// <summary>Another system (the house, the finale) is directing the family right now.</summary>
+        public bool External;
 
         enum Phase { Waiting, Intro, Chase, Home }
         Phase _phase = Phase.Waiting;
@@ -29,14 +32,29 @@ namespace Maily
         MailyController _m; CharacterController _cc;
         Vector3 _runDir;
 
-        const float CatchDist = 1.05f, GiveUpDist = 30f, GiveUpTime = 30f, NoticeDist = 10f;
+        public const float GiveUpTime = 20f;
+        const float CatchDist = 1.05f, GiveUpDist = 30f, NoticeDist = 10f;
 
         void Awake() => I = this;
+
+        /// <summary>Hand the family over to another system (house, finale): stop the intro and any chase.</summary>
+        public void Halt()
+        {
+            External = true; Chasing = false;
+            if (IntroActive)
+            {
+                IntroActive = false;
+                if (_cam != null) Destroy(_cam.gameObject);
+                if (_cc != null) _cc.enabled = true;
+                if (_m != null) _m.FightLock = false;
+            }
+            _phase = Phase.Home;
+        }
 
         void Update()
         {
             var gm = GameManager.I; _m = MailyController.I;
-            if (gm == null || _m == null) return;
+            if (gm == null || _m == null || External) return;
             if (_cc == null) _cc = _m.GetComponent<CharacterController>();
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
@@ -129,7 +147,7 @@ namespace Maily
         void StartChase(bool first)
         {
             _phase = Phase.Chase; Chasing = true; _chaseTime = 0f;
-            GameManager.I.Say(first ? "המשפחה רודפת אחרייך! לחצו Shift כדי לברוח מהר" : "\"הנה מיילי! תפסו אותה!\"");
+            GameManager.I.Say(first ? "יש לך 20 שניות לברוח מהמשפחה! (Shift לריצה מהירה)" : "\"הנה מיילי! תפסו אותה!\"  20 שניות לברוח!");
             Sfx.I?.Play2D(Sfx.I.Whoosh, 0.7f);
         }
 
@@ -139,6 +157,7 @@ namespace Maily
         {
             if (Paused(gm)) { foreach (var f in Members) f.Idle(dt, f.transform.position + f.transform.forward); return; }
             _chaseTime += dt;
+            Captions.I?.Pill($"המשפחה רודפת! עוד {Mathf.CeilToInt(GiveUpTime - _chaseTime)} שניות");
             var mp = _m.transform.position;
             float nearest = float.MaxValue;
             foreach (var f in Members)
@@ -151,7 +170,8 @@ namespace Maily
             if (nearest > GiveUpDist || _chaseTime > GiveUpTime)
             {
                 _phase = Phase.Home; Chasing = false; _cooldown = 4f;
-                gm.Say("\"היא ברחה לנו... מיילי!\"  המשפחה חוזרת הביתה");
+                gm.Say("ברחת! \"היא ברחה לנו... מיילי!\" המשפחה חוזרת הביתה");
+                Sfx.I?.Play2D(Sfx.I.Sting, 0.7f, 1.1f);
             }
         }
 
@@ -174,9 +194,17 @@ namespace Maily
         {
             Catches++;
             var gm = GameManager.I;
-            gm.Say("נתפסת! המשפחה מחזירה את מיילי הביתה");
             Sfx.I?.Play2D(Sfx.I.Heart, 1f, 0.9f);
             Fx.Hearts(_m.transform.position + Vector3.up * 0.9f);
+            _phase = Phase.Home; Chasing = false; _cooldown = 6f;
+            if (HouseInterior.I != null)
+            {
+                // into the house: the only way out now is the front door
+                gm.Say("נתפסת! המשפחה סגרה את מיילי בבית");
+                HouseInterior.I.Enter();
+                return;
+            }
+            gm.Say("נתפסת! המשפחה מחזירה את מיילי הביתה");
             var toHouse = Door - Gate; toHouse.y = 0;
             _m.Place(Gate, Quaternion.LookRotation(-toHouse.normalized).eulerAngles.y);
             for (int i = 0; i < Members.Count; i++) Members[i].Teleport(Door + Side(toHouse) * (i - 0.5f) * 1.2f, Gate);

@@ -19,7 +19,7 @@ namespace Maily
 
         public AudioClip Pickup, Coin, Sting, Bark, Yip, Squawk, Click, Ambient, Music, Hop, Heart;
         public AudioClip Growl, Hit, HitHeavy, Block, Whoosh, Gong;
-        public AudioClip Honk, Beep, Card, Chomp, Cluck, Thud, Match, Page;
+        public AudioClip Honk, Beep, Card, Chomp, Cluck, Thud, Match, Page, Shot;
         AudioSource _music, _ambient;
         readonly List<AudioSource> _pool = new List<AudioSource>();
         float _duck = 1f;
@@ -79,6 +79,7 @@ namespace Maily
             Thud = Make("Thud", 0.2f, (t, d) => (Sine(Mathf.Lerp(140f, 60f, t / 0.2f), t) + Noise(rnd) * Decay(t, 0.04f) * 0.7f) * Decay(t, 0.2f) * 0.8f);
             Match = Make("Match", 0.35f, (t, d) => (Sine(659.25f, t) * Decay(t, 0.15f) + (t > 0.09f ? Sine(987.8f, t) * Decay(t - 0.09f, 0.25f) : 0f)) * 0.45f);
             Page = Make("Page", 0.5f, (t, d) => Noise(rnd) * Mathf.Sin(Mathf.PI * t / 0.5f) * (0.35f + 0.25f * Mathf.Sin(t * 40f)) * 0.5f);
+            Shot = Make("Shot", 0.5f, (t, d) => (Noise(rnd) * Decay(t, 0.12f) * 0.9f + Sine(Mathf.Lerp(120f, 50f, t / 0.5f), t) * Decay(t, 0.3f) * 0.8f) * 0.9f);
             Ambient = MakeAmbient(rnd);
             Music = MakeMusic();
             LoadOverrides();

@@ -13,7 +13,7 @@ namespace Maily
     {
         Canvas _canvas;
         RectTransform _title, _hud, _pause, _end;
-        TextMeshProUGUI _prompt, _treats, _dogs, _parrots, _bullies, _timer, _toast, _endTime, _endStats, _friendHint, _parrotHint;
+        TextMeshProUGUI _prompt, _treats, _dogs, _parrots, _bullies, _timer, _toast, _endTime, _endStats, _friendHint, _parrotHint, _endTitle, _endText, _endCount;
         Image _fade, _friendArrow, _parrotArrow;
         CanvasGroup _toastGroup, _controlsGroup;
         float _toastT = 99f, _fadeA, _controlsT;
@@ -83,7 +83,7 @@ namespace Maily
             _prompt = Text(_title, "לחצו על מקש כלשהו", 36, new Color(Palette.UiPaper.r, Palette.UiPaper.g, Palette.UiPaper.b, 0.7f), TextAlignmentOptions.Center, FontStyles.Bold);
             _prompt.characterSpacing = 12;
             _prompt.rectTransform.anchorMin = new Vector2(0, 0.22f); _prompt.rectTransform.anchorMax = new Vector2(1, 0.28f);
-            var goalsLine = Text(_title, "אספו 50 חטיפים · הכירו 8 כלבים · רדפו אחרי 6 דררות · נצחו 3 כלבי רחוב", 32, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Normal);
+            var goalsLine = Text(_title, "אספו 15 חטיפים · הכירו 2 חברים · רדפו אחרי דררה · נצחו כלב רחוב · ואל תיתפסו למשפחה!", 32, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Normal);
             goalsLine.rectTransform.anchorMin = new Vector2(0, 0.12f); goalsLine.rectTransform.anchorMax = new Vector2(1, 0.18f);
             var credit = Text(_title, "בהשראת \"איה פלוטו\" מאת לאה גולדברג", 26, new Color(Palette.UiPaper.r, Palette.UiPaper.g, Palette.UiPaper.b, 0.6f), TextAlignmentOptions.Center, FontStyles.Italic);
             credit.rectTransform.anchorMin = new Vector2(0, 0.05f); credit.rectTransform.anchorMax = new Vector2(1, 0.1f);
@@ -101,11 +101,15 @@ namespace Maily
             // ---- Ended ----
             _end = Panel("Ended", root, new Color(Palette.UiInk.r, Palette.UiInk.g, Palette.UiInk.b, 0.6f));
             var ebox = Panel("Box", _end, Palette.UiPanel, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1060, 600), new Vector2(0.5f, 0.5f));
-            var eh = Text(ebox, "מיילי עשתה את היום הכי טוב בעולם!", 54, Palette.CoinGold, TextAlignmentOptions.Top, FontStyles.Bold); eh.margin = new Vector4(20, 40, 20, 0);
-            _endTime = Text(ebox, "", 38, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Bold);
-            _endTime.rectTransform.anchorMin = new Vector2(0, 0.5f); _endTime.rectTransform.anchorMax = new Vector2(1, 0.62f);
-            _endStats = Text(ebox, "", 32, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Normal);
-            _endStats.rectTransform.anchorMin = new Vector2(0, 0.4f); _endStats.rectTransform.anchorMax = new Vector2(1, 0.5f);
+            _endCount = Text(ebox, "", 26, Palette.Bronze, TextAlignmentOptions.Top, FontStyles.Normal); _endCount.margin = new Vector4(20, 22, 20, 0);
+            _endTitle = Text(ebox, "", 60, Palette.CoinGold, TextAlignmentOptions.Top, FontStyles.Bold); _endTitle.margin = new Vector4(20, 62, 20, 0);
+            _endText = Text(ebox, "", 30, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Normal);
+            _endText.rectTransform.anchorMin = new Vector2(0.06f, 0.6f); _endText.rectTransform.anchorMax = new Vector2(0.94f, 0.78f);
+            _endText.textWrappingMode = TextWrappingModes.Normal;
+            _endTime = Text(ebox, "", 34, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Bold);
+            _endTime.rectTransform.anchorMin = new Vector2(0, 0.47f); _endTime.rectTransform.anchorMax = new Vector2(1, 0.57f);
+            _endStats = Text(ebox, "", 28, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Normal);
+            _endStats.rectTransform.anchorMin = new Vector2(0, 0.38f); _endStats.rectTransform.anchorMax = new Vector2(1, 0.47f);
             Button(ebox, "לשחק שוב", new Vector2(0, -210), () => GameManager.I.Restart());
 
             // ---- fade overlay ----
@@ -247,7 +251,10 @@ namespace Maily
             if (s == GameState.Ended)
             {
                 var gm = GameManager.I;
-                Heb.Set(_endTime, $"זמן {GameManager.FormatTime(gm.RunTime)}      שיא {GameManager.FormatTime(gm.BestTime)}");
+                Heb.Set(_endCount, $"סיומת: {gm.EndingTitle}   ·   גילית {gm.EndingsFound} מתוך {GameManager.EndingIds.Length} סיומות");
+                Heb.Set(_endTitle, string.IsNullOrEmpty(gm.EndingTitle) ? "סוף" : gm.EndingTitle);
+                Heb.Set(_endText, gm.EndingText);
+                Heb.Set(_endTime, $"זמן {GameManager.FormatTime(gm.RunTime)}");
                 Heb.Set(_endStats, $"{gm.Treats} חטיפים · {gm.Coins} מטבעות · {gm.DogsMet} חברים חדשים · {gm.ParrotsChased} דררות · {gm.BulliesBeaten} ניצחונות");
             }
             Refresh();
@@ -274,6 +281,10 @@ namespace Maily
         void UpdateHints()
         {
             var m = MailyController.I; var cam = Camera.main; if (m == null || cam == null) return;
+            // inside the house the friend / parrot pointers would only point at the far-away kibbutz
+            bool inside = HouseInterior.I != null && HouseInterior.I.Active;
+            _friendHint.transform.parent.gameObject.SetActive(!inside); _parrotHint.transform.parent.gameObject.SetActive(!inside);
+            if (inside) return;
             NpcDog bestDog = null; float bd = float.MaxValue;
             foreach (var d in NpcDog.All) { if (d.Met) continue; float dist = (d.transform.position - m.transform.position).sqrMagnitude; if (dist < bd) { bd = dist; bestDog = d; } }
             Parrot bestP = null; float bp = float.MaxValue;

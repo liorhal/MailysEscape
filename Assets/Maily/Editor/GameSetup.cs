@@ -62,7 +62,8 @@ namespace Maily.EditorTools
 
             var systems = new GameObject("Systems");
             var gm = systems.AddComponent<GameManager>();
-            gm.TreatGoal = Mathf.Min(50, treats); gm.DogGoal = dogs; gm.ParrotGoal = Mathf.Min(6, parrots); gm.BullyGoal = bullies;
+            // stage 1: a short list, so the finale is reachable in one sitting
+            gm.TreatGoal = Mathf.Min(15, treats); gm.DogGoal = Mathf.Min(2, dogs); gm.ParrotGoal = Mathf.Min(1, parrots); gm.BullyGoal = Mathf.Min(1, bullies);
             systems.AddComponent<Sfx>();
             var fx = systems.AddComponent<Fx>();
             fx.ParticleMat = ParticleMaterial();
@@ -79,6 +80,9 @@ namespace Maily.EditorTools
             systems.AddComponent<MiniGameHud>();
             systems.AddComponent<MapView>();
             systems.AddComponent<StoryBook>();
+            systems.AddComponent<Captions>();
+            systems.AddComponent<HouseInterior>();
+            systems.AddComponent<Finale>();
             var fcGo = new GameObject("Fight Camera");
             var fc = fcGo.AddComponent<CinemachineCamera>();
             var fl = LensSettings.Default; fl.FieldOfView = 45f; fl.NearClipPlane = 0.1f; fl.FarClipPlane = 1500f; fc.Lens = fl;
@@ -266,8 +270,8 @@ namespace Maily.EditorTools
             fam.Door = new Vector3(door2.x, 0.05f, door2.y); fam.Gate = spawn;
             var looks = new (string name, float h, float speed, Color shirt, Color pants, Color hair, bool longHair)[]
             {
-                ("Parent", 1.78f, 5.6f, Palette.MiniSky, new Color(0.24f, 0.3f, 0.46f), Palette.DogBrown, false),
-                ("Child", 1.3f, 5.0f, Palette.Citrus, Palette.Trunk, Palette.UiInk, true),
+                ("Parent", 1.78f, 4.1f, Palette.MiniSky, new Color(0.24f, 0.3f, 0.46f), Palette.DogBrown, false),
+                ("Child", 1.3f, 3.7f, Palette.Citrus, Palette.Trunk, Palette.UiInk, true),
             };
             foreach (var l in looks)
             {
