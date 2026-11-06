@@ -20,6 +20,8 @@ namespace Maily
 
         /// <summary>A mini-game is in progress (street dogs leave Maily alone meanwhile).</summary>
         public bool Busy => Current == Phase.Countdown || Current == Phase.Running;
+        /// <summary>A 2D board game is on screen: Maily stands still and the cursor is free.</summary>
+        public bool Board => Busy && Game != null && Game.Is2D;
 
         const float NearDist = 2.6f;
 
@@ -76,6 +78,11 @@ namespace Maily
                 MiniGameSpot.Kind.Gates => new GateRace(),
                 MiniGameSpot.Kind.Frisbee => new FrisbeeCatch(),
                 MiniGameSpot.Kind.Oranges => new OrangePicking(),
+                MiniGameSpot.Kind.Maze => new MazeChase(),
+                MiniGameSpot.Kind.Solitaire => new Solitaire(),
+                MiniGameSpot.Kind.Memory => new MemoryMatch(),
+                MiniGameSpot.Kind.Chickens => new ChickenHerd(),
+                MiniGameSpot.Kind.Papers => new PaperRound(),
                 _ => (MiniGame)new BoneHunt(),
             };
             Game.Spot = spot;

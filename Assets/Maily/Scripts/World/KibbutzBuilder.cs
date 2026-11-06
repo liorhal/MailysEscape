@@ -60,7 +60,7 @@ namespace Maily
             var groundCol = new GameObject("Ground Collider");
             groundCol.transform.SetParent(root.transform);
             var bc = groundCol.AddComponent<BoxCollider>();
-            bc.size = new Vector3(2800, 1, 2800); bc.center = new Vector3(0, -0.45f, 0); // top at y=0.05
+            bc.size = new Vector3(2800, 1, 2800); bc.center = new Vector3(0, -0.5f, 0); // top at y=0; raised surfaces carry their own colliders
 
             // ---------- areas ----------
             var areas = L.areas.Select(a => (poly: KibbutzLayout.Points(a.pts), a.kind, a.name))
@@ -262,7 +262,19 @@ namespace Maily
             go.AddComponent<MeshFilter>().sharedMesh = mesh;
             var mr = go.AddComponent<MeshRenderer>();
             mr.sharedMaterial = fromBucket ? _mats[matKey] : Mats.Get(matKey, c);
+            if (WalkableKeys.Contains(name))
+            {
+                go.AddComponent<MeshCollider>().sharedMesh = mesh;
+                go.AddComponent<GroundSurface>();
+            }
         }
+
+        /// <summary>Flat buckets that are walked on (they get colliders so feet rest on the drawn surface).</summary>
+        public static readonly HashSet<string> WalkableKeys = new HashSet<string>
+        {
+            "Lawn", "LawnDeep", "Playground", "Pitch", "Pool", "Parking", "Cemetery", "Industrial", "Yard",
+            "Asphalt", "Curb", "Path", "Track", "PoolRim",
+        };
 
         // ------------------------------------------------------------------ trees
         static void PlantTrees(Result res, float radius)

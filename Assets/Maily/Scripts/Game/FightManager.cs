@@ -117,7 +117,7 @@ namespace Maily
             if (FightCam != null) FightCam.Priority = 0;
             if (_gait != null) _gait.FightLunge = _gait.FightCrouch = _gait.FightHurt = 0f;
             // stand Maily back up, level
-            var p = Maily.Root.position; p.y = Maily.GroundY;
+            var p = Maily.Root.position; p.y = Ground.HeightAt(p) + 0.01f;
             Maily.Root.SetPositionAndRotation(p, Quaternion.Euler(0, Maily.Root.eulerAngles.y, 0));
             if (_cc != null) _cc.enabled = true;
             _maily.FightLock = false;
@@ -441,7 +441,7 @@ namespace Maily
             }
         }
 
-        Vector3 Pos(Fighter f) => _center + _dir * f.X + Vector3.up * (f.GroundY + f.Y);
+        Vector3 Pos(Fighter f) { var p = _center + _dir * f.X; return p + Vector3.up * (Ground.HeightAt(p) + (f.IsMaily ? 0.01f : 0f) + f.Y); }
 
         // ------------------------------------------------------------------ presentation
         void ApplyPoses(Fighter f, Fighter other, float dt)

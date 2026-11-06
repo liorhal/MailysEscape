@@ -1,0 +1,3 @@
+Surface textures from ambientCG (https://ambientcg.com), licensed CC0 1.0 Universal (public domain).
+Grass001, Grass004, Ground037, Ground054, Asphalt010, Asphalt012, PavingStones070, Concrete034,
+Plaster001, Plaster003, RoofingTiles006 — 1K JPG, Color + NormalGL maps.

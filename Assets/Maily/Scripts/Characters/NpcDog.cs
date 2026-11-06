@@ -80,7 +80,7 @@ namespace Maily
                     }
                 }
             }
-            var p = transform.position; p.y = 0.05f; transform.position = p;
+            var p = transform.position; p.y = Ground.HeightAt(p); transform.position = p;
             _vel = Vector3.Lerp(_vel, Vector3.forward * speed, 1f - Mathf.Exp(-10f * dt));
 
             // occasional ambient bark

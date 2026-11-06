@@ -58,7 +58,7 @@ namespace Maily
             {
                 existing.Clear();
                 existing.indexFormat = mesh.indexFormat;
-                existing.SetVertices(mesh.vertices); existing.SetNormals(mesh.normals);
+                existing.SetVertices(mesh.vertices); existing.SetNormals(mesh.normals); existing.uv = mesh.uv;
                 existing.SetTriangles(mesh.triangles, 0); existing.RecalculateBounds();
                 UnityEditor.EditorUtility.SetDirty(existing);
                 return existing;

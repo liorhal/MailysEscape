@@ -15,6 +15,8 @@ namespace Maily
         public abstract string Status { get; }
         public abstract string ResultText { get; }
         public virtual bool ShowTimer => true;
+        /// <summary>Played on a full-screen 2D board: Maily stands still and the mouse cursor is free.</summary>
+        public virtual bool Is2D => false;
         /// <summary>0..1 hot/cold meter (bone hunt); &lt; 0 hides it.</summary>
         public virtual float Warmth => -1f;
 

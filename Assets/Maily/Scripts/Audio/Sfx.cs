@@ -19,6 +19,7 @@ namespace Maily
 
         public AudioClip Pickup, Coin, Sting, Bark, Yip, Squawk, Click, Ambient, Music, Hop, Heart;
         public AudioClip Growl, Hit, HitHeavy, Block, Whoosh, Gong;
+        public AudioClip Honk, Beep, Card, Chomp, Cluck, Thud, Match, Page;
         AudioSource _music, _ambient;
         readonly List<AudioSource> _pool = new List<AudioSource>();
         float _duck = 1f;
@@ -65,8 +66,22 @@ namespace Maily
                 return n * sweep * 0.35f;
             });
             Gong = Make("Gong", 1.6f, (t, d) => (Sine(110f, t) * 0.6f + Sine(221.5f, t) * 0.35f + Sine(332f, t) * 0.25f + Sine(447f, t) * 0.15f) * Decay(t, 1.6f) * 0.7f);
+            // ---- traffic, mini-games, story ----
+            Honk = Make("Honk", 0.42f, (t, d) => (Sq(392f, t) * 0.35f + Sq(494f, t) * 0.35f + Saw(196f, t) * 0.2f) * Env(t, 0.42f, 0.01f) * 0.55f);
+            Beep = Make("Beep", 0.3f, (t, d) => (t < 0.12f || t > 0.17f ? Sq(1180f, t) * 0.3f : 0f) * 0.6f);
+            Card = Make("Card", 0.07f, (t, d) => Noise(rnd) * Decay(t, 0.07f) * 0.55f + Sine(2400f, t) * Decay(t, 0.03f) * 0.15f);
+            Chomp = Make("Chomp", 0.09f, (t, d) => Sq(Mathf.Lerp(420f, 260f, t / 0.09f), t) * Decay(t, 0.09f) * 0.35f);
+            Cluck = Make("Cluck", 0.26f, (t, d) =>
+            {
+                float u = t % 0.13f; float f = 700f + 500f * Mathf.Exp(-u * 30f);
+                return (Saw(f, u) * 0.4f + Noise(rnd) * 0.2f) * Mathf.Exp(-u * 22f) * 0.8f;
+            });
+            Thud = Make("Thud", 0.2f, (t, d) => (Sine(Mathf.Lerp(140f, 60f, t / 0.2f), t) + Noise(rnd) * Decay(t, 0.04f) * 0.7f) * Decay(t, 0.2f) * 0.8f);
+            Match = Make("Match", 0.35f, (t, d) => (Sine(659.25f, t) * Decay(t, 0.15f) + (t > 0.09f ? Sine(987.8f, t) * Decay(t - 0.09f, 0.25f) : 0f)) * 0.45f);
+            Page = Make("Page", 0.5f, (t, d) => Noise(rnd) * Mathf.Sin(Mathf.PI * t / 0.5f) * (0.35f + 0.25f * Mathf.Sin(t * 40f)) * 0.5f);
             Ambient = MakeAmbient(rnd);
             Music = MakeMusic();
+            LoadOverrides();
 
             _music = gameObject.AddComponent<AudioSource>();
             _music.clip = Music; _music.loop = true; _music.spatialBlend = 0; _music.Play();
@@ -100,6 +115,20 @@ namespace Maily
             if (s == null) s = _pool[0];
             s.transform.position = pos; s.spatialBlend = spatial ? 1f : 0f;
             s.pitch = pitch; s.volume = vol * AudioGain.Sfx; s.clip = c; s.Play();
+        }
+
+        /// <summary>
+        /// Real recordings replace the synthesized sounds: drop a file named after a clip field into
+        /// Assets/Maily/Resources/Sfx/ (e.g. Bark.wav, Honk.ogg) and it is used instead.
+        /// </summary>
+        void LoadOverrides()
+        {
+            foreach (var f in GetType().GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            {
+                if (f.FieldType != typeof(AudioClip)) continue;
+                var clip = Resources.Load<AudioClip>("Sfx/" + f.Name);
+                if (clip != null) { f.SetValue(this, clip); Debug.Log("[Maily] Sound override: " + f.Name); }
+            }
         }
 
         // ---------------------------------------------------------------- synthesis

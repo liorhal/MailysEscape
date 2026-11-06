@@ -65,6 +65,7 @@ namespace Maily
             foreach (var d in HostileDog.All) Hide(d);
             foreach (var p in Parrot.All) Hide(p);
             foreach (var c in Collectible.All) Hide(c);
+            foreach (var v in TrafficVehicle.All) Hide(v);
             cam.Render();
             foreach (var r in hidden) r.enabled = true;
             RenderSettings.fog = fog;
@@ -99,7 +100,7 @@ namespace Maily
             trt.anchoredPosition = new Vector2(-230, -2); trt.sizeDelta = new Vector2(900, 60);
 
             // legend (right side, RTL)
-            var legend = Rect("Legend", _root, Palette.UiPanel, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-40, 0), new Vector2(440, 700));
+            var legend = Rect("Legend", _root, Palette.UiPanel, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-40, 0), new Vector2(440, 770));
             legend.pivot = new Vector2(1f, 0.5f);
             var lt = Label(legend, "מקרא", 40, Palette.CoinGold, TextAlignmentOptions.Right);
             lt.rectTransform.anchorMin = new Vector2(0, 1); lt.rectTransform.anchorMax = new Vector2(1, 1); lt.rectTransform.pivot = new Vector2(0.5f, 1);
@@ -115,6 +116,7 @@ namespace Maily
                 (_circle, Palette.ParrotGreen, "דררה"),
                 (_circle, Palette.Bone, "חטיף"),
                 (_square, Palette.MiniSky, "משחקון"),
+                (_square, Palette.Silver, "רכב / קלנועית"),
             };
             for (int i = 0; i < rows.Length; i++)
             {
@@ -198,7 +200,7 @@ namespace Maily
             if (gm.MapOpen && (mKey || esc)) gm.ToggleMap();
             else if (!gm.MapOpen && mKey && gm.State == GameState.Playing && !busy) { RenderBackground(); gm.ToggleMap(); }
 
-            bool miniOn = !gm.MapOpen && gm.State == GameState.Playing;
+            bool miniOn = !gm.MapOpen && gm.State == GameState.Playing && !(MiniGameManager.I != null && MiniGameManager.I.Board);
             if (miniOn) RenderBackground();
             if (_root.gameObject.activeSelf != gm.MapOpen) _root.gameObject.SetActive(gm.MapOpen);
             if (_miniRoot.gameObject.activeSelf != miniOn) _miniRoot.gameObject.SetActive(miniOn);
@@ -283,6 +285,11 @@ namespace Maily
                 Marker(_square, best > 0 ? MiniGameSpot.MedalColor(best) : Palette.UiPaper, s.transform.position, 30f, 45f);
                 Marker(_square, s.Accent, s.transform.position, 22f, 45f);
                 Text(s.Title, s.transform.position, s.Accent, 24f, new Vector2(0, 26));
+            }
+            foreach (var v in TrafficVehicle.All)
+            {
+                Marker(_square, Palette.UiInk, v.transform.position, v.IsCart ? 13f : 17f, -v.transform.eulerAngles.y);
+                Marker(_square, v.IsCart ? Palette.WallWhite : Palette.Silver, v.transform.position, v.IsCart ? 9f : 12f, -v.transform.eulerAngles.y);
             }
             var m = MailyController.I;
             if (m != null)

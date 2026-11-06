@@ -56,7 +56,7 @@ namespace Maily
         {
             InFight = false; FightLunge = FightCrouch = FightHurt = FightSpeed = 0f;
             transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, 0);
-            var p = transform.position; p.y = 0.05f; transform.position = p;
+            var p = transform.position; p.y = Ground.HeightAt(p); transform.position = p;
             if (beaten) { Defeated = true; _mode = Mode.Return; _target = Home; }
             else { _cooldown = 15f; _mode = Mode.Return; _target = Home; }
         }
@@ -124,7 +124,7 @@ namespace Maily
                     }
                 }
             }
-            var pos = transform.position; pos.y = 0.05f; transform.position = pos;
+            var pos = transform.position; pos.y = Ground.HeightAt(pos); transform.position = pos;
             Animate(dt, speed, false);
         }
 

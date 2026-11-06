@@ -53,6 +53,7 @@ namespace Maily.EditorTools
             int bullies = SpawnBullies(world, rnd, gameplay, spawn);
             string spots = SpawnMiniGames(world, rnd, gameplay, spawn);
             int landmarks = SpawnLandmarks(world, rnd, gameplay, home.pos);
+            log.AppendLine(TrafficSetup.Build(world, new System.Random(77), spawn));
             log.AppendLine($"Spawned: Maily @ {spawn}, {dogs} dogs, {parrots} parrots, {treats} treats, {bullies} street dogs");
             log.AppendLine($"Mini-games: {spots}; landmarks: {landmarks}");
 
@@ -74,10 +75,14 @@ namespace Maily.EditorTools
             systems.AddComponent<MiniGameManager>();
             systems.AddComponent<MiniGameHud>();
             systems.AddComponent<MapView>();
+            systems.AddComponent<StoryBook>();
             var fcGo = new GameObject("Fight Camera");
             var fc = fcGo.AddComponent<CinemachineCamera>();
             var fl = LensSettings.Default; fl.FieldOfView = 45f; fl.NearClipPlane = 0.1f; fl.FarClipPlane = 1500f; fc.Lens = fl;
             fc.Priority = 0; fm.FightCam = fc;
+
+            log.AppendLine(SkySetup.Apply(sun));
+            log.AppendLine(WorldTextures.Apply());
 
             EnsureFolder("Assets/Maily/Scenes");
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -350,7 +355,7 @@ namespace Maily.EditorTools
             var taken = new List<Vector3> { spawn };
             taken.AddRange(Object.FindObjectsByType<HostileDog>(FindObjectsInactive.Include).Select(d => d.transform.position));
             var log = new List<string>();
-            bool Ok(Vector3 p, float clear) => taken.All(t => (t - p).magnitude > 70f) && Free(p, clear);
+            bool Ok(Vector3 p, float clear) => taken.All(t => (t - p).magnitude > 60f) && Free(p, clear);
 
             // candidate points per game, best first
             var bySize = w.Areas.OrderByDescending(a => a.area).ToList();
@@ -376,6 +381,12 @@ namespace Maily.EditorTools
                 // the orchard closest to the houses
                 (MiniGameSpot.Kind.Oranges, AreaPoints("orchard").OrderBy(p => p.magnitude).ToList(), 0.9f),
                 (MiniGameSpot.Kind.Bones, AreaPoints("park", "wood", "grass"), 1.5f),
+                // board games sit in the heart of the kibbutz, the farm games out by the fields
+                (MiniGameSpot.Kind.Solitaire, AreaPoints("grass", "park", "village_green").OrderBy(p => p.magnitude).ToList(), 1.5f),
+                (MiniGameSpot.Kind.Memory, AreaPoints("school", "schoolyard", "playground", "grass"), 1.5f),
+                (MiniGameSpot.Kind.Maze, AreaPoints("playground", "grass", "park").Where(p => p.magnitude < 300f).ToList(), 1.5f),
+                (MiniGameSpot.Kind.Chickens, AreaPoints("farmland", "meadow", "scrub", "orchard", "grass").OrderByDescending(p => p.magnitude).ToList(), 3.2f),
+                (MiniGameSpot.Kind.Papers, AreaPoints("grass", "park", "playground").Where(p => p.magnitude > 110f && p.magnitude < 380f).ToList(), 1.5f),
             };
             foreach (var (kind, pts, clear) in plan)
             {

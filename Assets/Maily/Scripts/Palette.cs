@@ -62,6 +62,8 @@ namespace Maily
         public static readonly Color MiniSky     = H("#4FC3F7"); // gate race
         public static readonly Color MiniFrisbee = H("#FF7A3D"); // frisbee
         public static readonly Color MiniDirt    = H("#8A6A48"); // bone hunt soil
+        public static readonly Color MiniHen     = H("#F2A03A"); // chicken coop (amber)
+        public static readonly Color MiniNews    = H("#9B7CF4"); // paper round (lavender)
         public static readonly Color Bronze      = H("#C98A4B");
         public static readonly Color Silver      = H("#D3D8E0");
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Maily
@@ -177,7 +178,7 @@ namespace Maily
         /// <summary>Mini-game start marker: glowing ring, white post, floating icon for the game.</summary>
         public static void BuildSpot(MiniGameSpot spot)
         {
-            var root = spot.transform; var c = spot.Accent; string A = "Spot_" + spot.Game, W = Key(Palette.WallWhite);
+            var root = spot.transform; var c = spot.Accent; string A = "Spot_" + spot.Game, W = Key(Palette.WallWhite), I0 = Key(Palette.UiInk);
             var ring = Part(PrimitiveType.Cylinder, root, new Vector3(0, 0.03f, 0), new Vector3(2.6f, 0.012f, 2.6f), c, A, default, 1.4f);
             Part(PrimitiveType.Cylinder, root, new Vector3(0, 0.025f, 0), new Vector3(2.2f, 0.014f, 2.2f), Palette.UiInk, Key(Palette.UiInk));
             Part(PrimitiveType.Cylinder, root, new Vector3(0, 0.75f, 0), new Vector3(0.1f, 0.75f, 0.1f), Palette.WallWhite, W);
@@ -197,6 +198,27 @@ namespace Maily
                     Part(PrimitiveType.Sphere, icon, new Vector3(0, 0, 0.3f), Vector3.one * 0.42f, Palette.Citrus, "OrangeIcon", default, 0.6f);
                     Part(PrimitiveType.Cube, icon, new Vector3(0.05f, 0.22f, 0.3f), new Vector3(0.14f, 0.04f, 0.08f), Palette.Foliage, Key(Palette.Foliage));
                     break;
+                case MiniGameSpot.Kind.Maze:      // a little chomping yellow-gold head
+                    Part(PrimitiveType.Sphere, icon, new Vector3(0, 0, 0.3f), Vector3.one * 0.5f, Palette.CoinGold, Key(Palette.CoinGold), default, 0.5f);
+                    Part(PrimitiveType.Cube, icon, new Vector3(0.18f, 0, 0.36f), new Vector3(0.3f, 0.16f, 0.5f), Palette.UiInk, I0, new Vector3(0, 0, 0));
+                    break;
+                case MiniGameSpot.Kind.Solitaire: // a fan of cards
+                    for (int i = 0; i < 3; i++)
+                        Part(PrimitiveType.Cube, icon, new Vector3((i - 1) * 0.16f, 0, 0.3f + i * 0.01f), new Vector3(0.32f, 0.46f, 0.02f), i == 1 ? Palette.BullyRed : Palette.WallWhite, i == 1 ? Key(Palette.BullyRed) : W, new Vector3(0, 0, (1 - i) * 18f));
+                    break;
+                case MiniGameSpot.Kind.Memory:    // two matching tiles
+                    Part(PrimitiveType.Cube, icon, new Vector3(-0.2f, 0, 0.3f), new Vector3(0.34f, 0.34f, 0.05f), Palette.ParrotGreen, Key(Palette.ParrotGreen));
+                    Part(PrimitiveType.Cube, icon, new Vector3(0.2f, 0, 0.3f), new Vector3(0.34f, 0.34f, 0.05f), Palette.ParrotGreen, Key(Palette.ParrotGreen));
+                    break;
+                case MiniGameSpot.Kind.Chickens:  // a hen
+                    Part(PrimitiveType.Sphere, icon, new Vector3(0, -0.05f, 0.3f), new Vector3(0.42f, 0.34f, 0.5f), Palette.WallWhite, W);
+                    Part(PrimitiveType.Sphere, icon, new Vector3(0, 0.2f, 0.52f), Vector3.one * 0.2f, Palette.WallWhite, W);
+                    Part(PrimitiveType.Cube, icon, new Vector3(0, 0.33f, 0.52f), new Vector3(0.04f, 0.1f, 0.12f), Palette.BullyRed, Key(Palette.BullyRed));
+                    break;
+                case MiniGameSpot.Kind.Papers:    // a rolled newspaper
+                    Part(PrimitiveType.Cylinder, icon, new Vector3(0, 0, 0.3f), new Vector3(0.2f, 0.32f, 0.2f), Palette.WallWhite, W, new Vector3(0, 0, 90));
+                    Part(PrimitiveType.Cylinder, icon, new Vector3(0, 0, 0.3f), new Vector3(0.21f, 0.04f, 0.21f), Palette.BullyRed, Key(Palette.BullyRed), new Vector3(0, 0, 90));
+                    break;
                 default:
                     Part(PrimitiveType.Capsule, icon, new Vector3(0, 0, 0.3f), new Vector3(0.12f, 0.3f, 0.12f), Palette.Bone, "Bone", new Vector3(0, 0, 90), 0.35f);
                     foreach (var x in new[] { -0.3f, 0.3f }) foreach (var y in new[] { -0.07f, 0.07f })
@@ -204,6 +226,55 @@ namespace Maily
                     break;
             }
             spot.Icon = icon; spot.Ring = ring.GetComponent<Renderer>();
+        }
+
+        /// <summary>A kibbutz golf cart (קלנועית) with an old-timer at the wheel in a kova tembel.</summary>
+        public static void BuildCart(TrafficVehicle v, Color body, Color shirt, bool basket)
+        {
+            var root = v.transform; string B = Key(body), I = Key(Palette.UiInk), W = Key(Palette.WallWhite);
+            var tyre = new Color(0.16f, 0.16f, 0.18f);
+            Part(PrimitiveType.Cube, root, new Vector3(0, 0.36f, 0), new Vector3(1.05f, 0.22f, 2.3f), body, B);             // chassis
+            Part(PrimitiveType.Cube, root, new Vector3(0, 0.62f, 0.86f), new Vector3(1.05f, 0.42f, 0.56f), body, B);         // front cowl
+            Part(PrimitiveType.Cube, root, new Vector3(0, 0.86f, 1.0f), new Vector3(0.9f, 0.06f, 0.22f), body, B);           // dash
+            Part(PrimitiveType.Cube, root, new Vector3(0, 0.66f, -0.1f), new Vector3(0.98f, 0.14f, 0.55f), Palette.UiInk, I); // seat
+            Part(PrimitiveType.Cube, root, new Vector3(0, 0.98f, -0.38f), new Vector3(0.98f, 0.5f, 0.1f), Palette.UiInk, I);  // backrest
+            foreach (var x in new[] { -0.5f, 0.5f }) foreach (var z in new[] { 0.95f, -0.45f })
+                Part(PrimitiveType.Cylinder, root, new Vector3(x, 1.3f, z), new Vector3(0.05f, 0.62f, 0.05f), Palette.WallWhite, W);
+            Part(PrimitiveType.Cube, root, new Vector3(0, 1.93f, 0.25f), new Vector3(1.2f, 0.07f, 1.75f), Palette.WallWhite, W); // canopy
+            if (basket)
+            {
+                Part(PrimitiveType.Cube, root, new Vector3(0, 0.66f, -0.86f), new Vector3(0.9f, 0.32f, 0.5f), Palette.Trunk, Key(Palette.Trunk));
+                Part(PrimitiveType.Sphere, root, new Vector3(-0.2f, 0.86f, -0.86f), Vector3.one * 0.2f, Palette.Citrus, Key(Palette.Citrus));
+                Part(PrimitiveType.Sphere, root, new Vector3(0.15f, 0.85f, -0.8f), Vector3.one * 0.2f, Palette.Citrus, Key(Palette.Citrus));
+            }
+            foreach (var x in new[] { -0.3f, 0.3f })
+                Part(PrimitiveType.Sphere, root, new Vector3(x, 0.66f, 1.15f), new Vector3(0.14f, 0.1f, 0.05f), new Color(1f, 0.95f, 0.8f), "CartLamp", default, 1.2f);
+            // steering column + wheel
+            Part(PrimitiveType.Cylinder, root, new Vector3(-0.22f, 0.98f, 0.62f), new Vector3(0.04f, 0.22f, 0.04f), Palette.UiInk, I, new Vector3(-35, 0, 0));
+            Part(PrimitiveType.Cylinder, root, new Vector3(-0.22f, 1.14f, 0.5f), new Vector3(0.3f, 0.015f, 0.3f), Palette.UiInk, I, new Vector3(-55, 0, 0));
+            // wheels: the pivot spins about its local X
+            var wheels = new List<Transform>();
+            foreach (var x in new[] { -0.52f, 0.52f }) foreach (var z in new[] { 0.78f, -0.72f })
+            {
+                var piv = Pivot("Wheel", root, new Vector3(x, 0.24f, z));
+                Part(PrimitiveType.Cylinder, piv, Vector3.zero, new Vector3(0.48f, 0.08f, 0.48f), tyre, Key(tyre), new Vector3(0, 0, 90));
+                Part(PrimitiveType.Cylinder, piv, new Vector3(x > 0 ? 0.08f : -0.08f, 0, 0), new Vector3(0.24f, 0.01f, 0.24f), Palette.Silver, Key(Palette.Silver), new Vector3(0, 0, 90));
+                Part(PrimitiveType.Cube, piv, new Vector3(x > 0 ? 0.085f : -0.085f, 0, 0), new Vector3(0.02f, 0.2f, 0.05f), tyre, Key(tyre)); // shows the spin
+                wheels.Add(piv);
+            }
+            // the driver: a kibbutz old-timer, white hair under a kova tembel
+            var drv = Pivot("Driver", root, new Vector3(-0.22f, 0.74f, -0.12f));
+            var skin = new Color(0.86f, 0.66f, 0.52f);
+            Part(PrimitiveType.Capsule, drv, new Vector3(0, 0.42f, 0), new Vector3(0.42f, 0.34f, 0.3f), shirt, Key(shirt));
+            Part(PrimitiveType.Sphere, drv, new Vector3(0, 0.88f, 0.02f), Vector3.one * 0.26f, skin, Key(skin));
+            Part(PrimitiveType.Sphere, drv, new Vector3(0, 0.84f, -0.06f), new Vector3(0.27f, 0.2f, 0.22f), Palette.WallWhite, W);   // white hair
+            Part(PrimitiveType.Cylinder, drv, new Vector3(0, 0.98f, 0.02f), new Vector3(0.36f, 0.015f, 0.36f), Palette.WallWhite, Key(new Color(0.93f, 0.92f, 0.86f))); // brim
+            Part(PrimitiveType.Sphere, drv, new Vector3(0, 1.03f, 0.02f), new Vector3(0.27f, 0.2f, 0.27f), new Color(0.93f, 0.92f, 0.86f), Key(new Color(0.93f, 0.92f, 0.86f))); // kova tembel
+            foreach (var x in new[] { -0.17f, 0.17f })
+                Part(PrimitiveType.Capsule, drv, new Vector3(x * 0.8f, 0.45f, 0.28f), new Vector3(0.09f, 0.22f, 0.09f), skin, Key(skin), new Vector3(70, 0, 0)); // arms to the wheel
+            Part(PrimitiveType.Cube, drv, new Vector3(0, 0.0f, 0.3f), new Vector3(0.36f, 0.12f, 0.5f), new Color(0.35f, 0.33f, 0.3f), Key(new Color(0.35f, 0.33f, 0.3f))); // legs
+            v.Wheels = wheels.ToArray(); v.WheelRadius = 0.24f; v.Driver = drv; v.IsCart = true; v.Length = 2.4f;
+            var bc = root.gameObject.AddComponent<BoxCollider>(); bc.center = new Vector3(0, 1.0f, 0.05f); bc.size = new Vector3(1.2f, 1.9f, 2.4f);
         }
 
         /// <summary>Maily's doghouse + water bowl beside her home.</summary>

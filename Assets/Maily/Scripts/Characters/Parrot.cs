@@ -57,7 +57,7 @@ namespace Maily
                     transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(away), dt * 10f);
                     transform.position += away * FleeSpeed * dt;
                     _hopPhase += dt * 7f;
-                    var p = transform.position; p.y = 0.05f + Mathf.Abs(Mathf.Sin(_hopPhase * Mathf.PI)) * 0.35f; transform.position = p;
+                    var p = transform.position; p.y = Ground.HeightAt(p) + Mathf.Abs(Mathf.Sin(_hopPhase * Mathf.PI)) * 0.35f; transform.position = p;
                     Body.localRotation = Quaternion.Euler(-10, 0, 0);
                     Wings(0.5f, dt);
                     break;

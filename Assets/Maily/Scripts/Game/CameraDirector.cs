@@ -42,10 +42,11 @@ namespace Maily
             }
 
             bool playing = gm.State == GameState.Playing;
-            bool locked = playing || gm.State == GameState.Fighting; // fights are keyboard / pad only
+            bool board = MiniGameManager.I != null && MiniGameManager.I.Board; // 2D mini-games use the mouse
+            bool locked = (playing && !board) || gm.State == GameState.Fighting; // fights are keyboard / pad only
             Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !locked;
-            if (!playing) return;
+            if (!playing || board) return;
 
             Vector2 look2 = Vector2.zero;
             if (Mouse.current != null) look2 += Mouse.current.delta.ReadValue() * MouseSensitivity;

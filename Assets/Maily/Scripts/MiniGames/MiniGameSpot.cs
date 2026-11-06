@@ -6,7 +6,7 @@ namespace Maily
     /// <summary>Where a mini-game starts: a glowing ring + post with a floating icon. Walk in and press F.</summary>
     public class MiniGameSpot : MonoBehaviour
     {
-        public enum Kind { Gates, Frisbee, Oranges, Bones }
+        public enum Kind { Gates, Frisbee, Oranges, Bones, Maze, Solitaire, Memory, Chickens, Papers }
         public static readonly List<MiniGameSpot> All = new List<MiniGameSpot>();
 
         public Kind Game;
@@ -18,6 +18,11 @@ namespace Maily
             Kind.Gates => "מרוץ שערים",
             Kind.Frisbee => "תפיסת פריזבי",
             Kind.Oranges => "קטיף תפוזים",
+            Kind.Maze => "מבוך החטיפים",
+            Kind.Solitaire => "סוליטר בחדר האוכל",
+            Kind.Memory => "משחק זיכרון",
+            Kind.Chickens => "לול התרנגולות",
+            Kind.Papers => "חלוקת עיתונים",
             _ => "חיפוש עצמות",
         };
 
@@ -26,6 +31,11 @@ namespace Maily
             Kind.Gates => "עברו בכל השערים לפי הסדר לפני שהזמן נגמר",
             Kind.Frisbee => "רוצו לצל של הפריזבי ותפסו אותה",
             Kind.Oranges => "אספו כמה שיותר תפוזים שנופלים מהעצים",
+            Kind.Maze => "משחק דו-ממדי: אכלו את כל החטיפים וברחו מהחתולים",
+            Kind.Solitaire => "משחק קלפים דו-ממדי: סדרו את כל הקלפים לפי הצורות",
+            Kind.Memory => "משחק דו-ממדי: מצאו את כל הזוגות בכמה שפחות תורות",
+            Kind.Chickens => "החזירו את התרנגולות ללול. נביחה (E) מבריחה אותן",
+            Kind.Papers => "קחו עיתון מהערימה והביאו אותו לבית המסומן",
             _ => "רחרחו לפי חם / קר וחפרו עם F",
         };
 
@@ -34,6 +44,11 @@ namespace Maily
             Kind.Gates => Palette.MiniSky,
             Kind.Frisbee => Palette.MiniFrisbee,
             Kind.Oranges => Palette.Citrus,
+            Kind.Maze => Palette.CoinGold,
+            Kind.Solitaire => Palette.BullyRed,
+            Kind.Memory => Palette.ParrotGreen,
+            Kind.Chickens => Palette.MiniHen,
+            Kind.Papers => Palette.MiniNews,
             _ => Palette.Bone,
         };
 

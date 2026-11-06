@@ -156,10 +156,25 @@ namespace Maily
             Quad(P(-1, -1, 1), P(-1, -1, -1), P(1, -1, -1), P(1, -1, 1));
         }
 
+        /// <summary>Planar UVs in metres, projected along each face's dominant axis (textures tile by material scale).</summary>
+        List<Vector2> WorldUVs()
+        {
+            var uv = new List<Vector2>(V.Count);
+            for (int i = 0; i < V.Count; i++)
+            {
+                var v = V[i]; var n = N[i];
+                float ax = Mathf.Abs(n.x), ay = Mathf.Abs(n.y), az = Mathf.Abs(n.z);
+                if (ay >= ax && ay >= az) uv.Add(new Vector2(v.x, v.z));
+                else if (ax >= az) uv.Add(new Vector2(v.z, v.y));
+                else uv.Add(new Vector2(v.x, v.y));
+            }
+            return uv;
+        }
+
         public Mesh Bake(string name)
         {
             var m = new Mesh { name = name, indexFormat = IndexFormat.UInt32 };
-            m.SetVertices(V); m.SetNormals(N); m.SetTriangles(T, 0);
+            m.SetVertices(V); m.SetNormals(N); m.SetUVs(0, WorldUVs()); m.SetTriangles(T, 0);
             m.RecalculateBounds();
             return m;
         }

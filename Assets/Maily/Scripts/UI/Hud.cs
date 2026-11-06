@@ -85,6 +85,8 @@ namespace Maily
             _prompt.rectTransform.anchorMin = new Vector2(0, 0.22f); _prompt.rectTransform.anchorMax = new Vector2(1, 0.28f);
             var goalsLine = Text(_title, "אספו 50 חטיפים · הכירו 8 כלבים · רדפו אחרי 6 דררות · נצחו 3 כלבי רחוב", 32, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Normal);
             goalsLine.rectTransform.anchorMin = new Vector2(0, 0.12f); goalsLine.rectTransform.anchorMax = new Vector2(1, 0.18f);
+            var credit = Text(_title, "בהשראת \"איה פלוטו\" מאת לאה גולדברג", 26, new Color(Palette.UiPaper.r, Palette.UiPaper.g, Palette.UiPaper.b, 0.6f), TextAlignmentOptions.Center, FontStyles.Italic);
+            credit.rectTransform.anchorMin = new Vector2(0, 0.05f); credit.rectTransform.anchorMax = new Vector2(1, 0.1f);
 
             // ---- Pause ----
             _pause = Panel("Pause", root, new Color(Palette.UiInk.r, Palette.UiInk.g, Palette.UiInk.b, 0.7f));
