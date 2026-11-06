@@ -50,7 +50,7 @@ namespace Maily
         {
             if (State != GameState.Title) return;
             SetState(GameState.Playing);
-            Say("Maily slipped out of the garden gate! Explore Kibbutz Hatzor");
+            Say("מיילי חמקה משער הגינה! צאו לטייל בקיבוץ חצור");
         }
 
         public void TogglePause()
@@ -87,7 +87,7 @@ namespace Maily
         {
             if (State != GameState.Playing) return;
             Treats++; if (coin) Coins++;
-            if (Treats == TreatGoal) { Say("All the treats! Good girl, Maily!"); Sfx.I?.Play2D(Sfx.I.Sting, 0.8f); }
+            if (Treats == TreatGoal) { Say("כל החטיפים! כלבה טובה, מיילי!"); Sfx.I?.Play2D(Sfx.I.Sting, 0.8f); }
             Changed?.Invoke(); CheckWin();
         }
 
@@ -95,7 +95,7 @@ namespace Maily
         {
             if (State != GameState.Playing) return;
             DogsMet++;
-            Say(DogsMet == DogGoal ? $"Maily met {name} — that's every dog in the kibbutz!" : $"Maily made a friend: {name}!");
+            Say(DogsMet == DogGoal ? $"מיילי הכירה את {name}. עכשיו היא מכירה את כל כלבי הקיבוץ!" : $"מיילי הכירה חבר חדש: {name}!");
             if (DogsMet == DogGoal) Sfx.I?.Play2D(Sfx.I.Sting, 0.8f);
             Changed?.Invoke(); CheckWin();
         }
@@ -104,7 +104,7 @@ namespace Maily
         {
             if (State != GameState.Playing) return;
             ParrotsChased++;
-            Say(ParrotsChased == ParrotGoal ? "Those dararot won't forget Maily!" : "Chased a darara away! Squawk!");
+            Say(ParrotsChased == ParrotGoal ? "הדררות לא ישכחו את מיילי!" : "דררה ברחה בצווחות!");
             if (ParrotsChased == ParrotGoal) Sfx.I?.Play2D(Sfx.I.Sting, 0.8f);
             Changed?.Invoke(); CheckWin();
         }

@@ -13,14 +13,14 @@ namespace Maily
 
         public static readonly DogLook[] Dogs =
         {
-            new DogLook("Shoko",  Palette.DogBrown,  Palette.DogCream, 1.15f, false, false),
-            new DogLook("Bamba",  Palette.DogGinger, Palette.DogCream, 0.8f,  true,  true),
-            new DogLook("Luna",   Palette.DogBlack,  Palette.DogWhite, 1.0f,  false, false),
-            new DogLook("Kushi",  Palette.DogBlack,  Palette.DogGray,  0.95f, true,  false),
-            new DogLook("Pita",   Palette.DogCream,  Palette.DogWhite, 0.7f,  false, true),
-            new DogLook("Rex",    Palette.DogGray,   Palette.DogCream, 1.25f, true,  false),
-            new DogLook("Mitzi",  Palette.DogWhite,  Palette.DogGinger,0.6f,  true,  true),
-            new DogLook("Lucky",  Palette.DogGinger, Palette.DogWhite, 1.05f, false, false),
+            new DogLook("שוקו",  Palette.DogBrown,  Palette.DogCream, 1.15f, false, false), // Shoko
+            new DogLook("במבה",  Palette.DogGinger, Palette.DogCream, 0.8f,  true,  true),  // Bamba
+            new DogLook("לונה",  Palette.DogBlack,  Palette.DogWhite, 1.0f,  false, false), // Luna
+            new DogLook("טופי",  Palette.DogBlack,  Palette.DogGray,  0.95f, true,  false), // Toffee
+            new DogLook("פיתה",  Palette.DogCream,  Palette.DogWhite, 0.7f,  false, true),  // Pita
+            new DogLook("רקס",   Palette.DogGray,   Palette.DogCream, 1.25f, true,  false), // Rex
+            new DogLook("מיצי",  Palette.DogWhite,  Palette.DogGinger,0.6f,  true,  true),  // Mitzi
+            new DogLook("לאקי",  Palette.DogGinger, Palette.DogWhite, 1.05f, false, false), // Lucky
         };
 
         static GameObject Part(PrimitiveType t, Transform parent, Vector3 pos, Vector3 scale, Color c, string key, Vector3 euler = default, float emission = 0f)

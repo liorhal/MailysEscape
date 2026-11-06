@@ -25,6 +25,7 @@ namespace Maily.EditorTools
         public static string BuildAll()
         {
             var log = new System.Text.StringBuilder();
+            log.AppendLine(HebrewFontSetup.Ensure());
             Mats.ClearCache();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
