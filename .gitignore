@@ -141,3 +141,7 @@ crashlytics-build.properties
 .vscode/
 *.slnx
 
+
+# Pixabay sounds: usable inside the game, not redistributable as standalone files (kept local only)
+Assets/Maily/Resources/Sfx/*.ogg
+Assets/Maily/Resources/Sfx/*.ogg.meta
