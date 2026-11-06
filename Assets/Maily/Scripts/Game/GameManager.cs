@@ -60,6 +60,7 @@ namespace Maily
             I = this;
             Time.timeScale = 1f;
             Application.targetFrameRate = 120;
+            if (GetComponent<Arrest>() == null) gameObject.AddComponent<Arrest>(); // road-safety cutscene + jail
 #if UNITY_WEBGL && !UNITY_EDITOR
             WebPerformance();
             if (Application.absoluteURL.Contains("mute=1")) AudioListener.volume = 0f; // silent test runs

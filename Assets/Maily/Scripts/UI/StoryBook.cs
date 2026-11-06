@@ -65,7 +65,7 @@ namespace Maily
             var gm = GameManager.I; var m = MailyController.I;
             if (gm == null || m == null) return;
             if (gm.State == GameState.Title) return;
-            if (HouseInterior.I != null && HouseInterior.I.Active) { if (_show >= 0f) { _show = -1f; _page.gameObject.SetActive(false); } return; } // inside: no story pages
+            if ((HouseInterior.I != null && HouseInterior.I.Active) || Arrest.InJail) { if (_show >= 0f) { _show = -1f; _page.gameObject.SetActive(false); } return; } // inside: no story pages
 
             if (gm.State == GameState.Playing) _playTime += Time.deltaTime;
             if (_playTime > 1.2f && !(Family.I != null && Family.I.IntroActive)) Tell(Beat.Start);

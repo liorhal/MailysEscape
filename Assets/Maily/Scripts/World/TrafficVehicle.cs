@@ -19,6 +19,10 @@ namespace Maily
         public Transform[] Wheels;
         public float WheelRadius = 0.32f;
         public Transform Driver;           // bobs a little (carts)
+        /// <summary>Held in place by a cutscene (the car whose driver calls the police).</summary>
+        public bool Hold;
+        /// <summary>How long this car has been standing still because Maily is in its way.</summary>
+        public float StoppedForMaily { get; private set; }
 
         RoadGraph _g;
         int _from, _to;
@@ -84,8 +88,9 @@ namespace Maily
                     _honkCd = 3.5f;
                 }
             }
-            if (frozen) want = 0f;
+            if (frozen || Hold) want = 0f;
             _v = Mathf.MoveTowards(_v, want, (want < _v ? 9f : 2.5f) * dt);
+            StoppedForMaily = block < 999f && forMaily && _v < 0.3f && !frozen ? StoppedForMaily + dt : 0f;
 
             // stuck behind something that isn't moving away (a parked prop, another car head-on): turn around
             _stuck = _v < 0.1f && !frozen && !forMaily ? _stuck + dt : 0f;

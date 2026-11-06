@@ -13,6 +13,7 @@ namespace Maily
         public static Captions I { get; private set; }
 
         RectTransform _bar, _pill;
+        Image _black; float _blackA, _blackTarget, _blackSpeed = 1.5f;
         TextMeshProUGUI _barText, _pillText;
         Image _pillBg;
         float _barT = -1f, _barHold, _pillSeen = -1f;
@@ -37,7 +38,16 @@ namespace Maily
             _pillText = Board2D.Label(_pill, "", 32, Palette.UiPaper, Vector2.zero, new Vector2(600, 60));
             _pillText.fontStyle = FontStyles.Bold;
             _pill.gameObject.SetActive(false);
+
+            // full-screen black for cutscene cuts (behind the captions so subtitles stay readable)
+            _black = Board2D.Box("Black", root, Color.black, Vector2.zero, Vector2.zero, Vector2.zero, Vector2.one).GetComponent<Image>();
+            _black.sprite = null; _black.type = Image.Type.Simple; _black.color = new Color(0, 0, 0, 0);
+            _black.transform.SetAsFirstSibling();
         }
+
+        /// <summary>Fade the screen to black (1) or back (0) over 1/speed seconds.</summary>
+        public void Fade(float target, float speed = 1.5f) { _blackTarget = target; _blackSpeed = speed; }
+        public bool IsBlack => _blackA > 0.99f;
 
         /// <summary>Subtitle for `seconds` (also logged, like toasts).</summary>
         public void Show(string text, float seconds = 3f)
@@ -61,6 +71,8 @@ namespace Maily
         void Update()
         {
             if (_bar == null) return;
+            _blackA = Mathf.MoveTowards(_blackA, _blackTarget, _blackSpeed * Time.unscaledDeltaTime);
+            _black.color = new Color(0, 0, 0, _blackA); _black.enabled = _blackA > 0.001f;
             var gm = GameManager.I;
             bool overlay = gm != null && (gm.State == GameState.Paused || gm.State == GameState.Ended || gm.MapOpen);
             if (_barT >= 0f)

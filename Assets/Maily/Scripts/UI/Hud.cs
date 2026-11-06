@@ -288,7 +288,7 @@ namespace Maily
         {
             var m = MailyController.I; var cam = Camera.main; if (m == null || cam == null) return;
             // inside the house the friend / parrot pointers would only point at the far-away kibbutz
-            bool inside = HouseInterior.I != null && HouseInterior.I.Active;
+            bool inside = (HouseInterior.I != null && HouseInterior.I.Active) || Arrest.InJail;
             _friendHint.transform.parent.gameObject.SetActive(!inside); _parrotHint.transform.parent.gameObject.SetActive(!inside);
             if (inside) return;
             NpcDog bestDog = null; float bd = float.MaxValue;

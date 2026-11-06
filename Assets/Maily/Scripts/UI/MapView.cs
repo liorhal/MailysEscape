@@ -204,7 +204,7 @@ namespace Maily
             if (gm.MapOpen && (mKey || esc)) gm.ToggleMap();
             else if (!gm.MapOpen && mKey && gm.State == GameState.Playing && !busy) { RenderBackground(); gm.ToggleMap(); }
 
-            bool miniOn = !gm.MapOpen && gm.State == GameState.Playing && !(MiniGameManager.I != null && MiniGameManager.I.Board) && !(HouseInterior.I != null && HouseInterior.I.Active);
+            bool miniOn = !gm.MapOpen && gm.State == GameState.Playing && !(MiniGameManager.I != null && MiniGameManager.I.Board) && !(HouseInterior.I != null && HouseInterior.I.Active) && !Arrest.InJail;
             if (miniOn) RenderBackground();
             if (_root.gameObject.activeSelf != gm.MapOpen) _root.gameObject.SetActive(gm.MapOpen);
             if (_miniRoot.gameObject.activeSelf != miniOn) _miniRoot.gameObject.SetActive(miniOn);

@@ -37,6 +37,14 @@ namespace Maily
 
         void Awake() => I = this;
 
+        /// <summary>Take the family back after another system is done with them (jail): home, a short head start.</summary>
+        public void Resume()
+        {
+            External = false; Chasing = false; _phase = Phase.Home; _cooldown = 8f;
+            var toHouse = Door - Gate;
+            for (int i = 0; i < Members.Count; i++) { Members[i].gameObject.SetActive(true); Members[i].Teleport(Door + Side(toHouse) * (i - 0.5f) * 1.2f, Gate); }
+        }
+
         /// <summary>Hand the family over to another system (house, finale): stop the intro and any chase.</summary>
         public void Halt()
         {
