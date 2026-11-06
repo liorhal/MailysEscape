@@ -116,16 +116,16 @@ namespace Maily
         {
             TimeLeft -= dt;
             if (Board2D.Pressed(Key.Q)) return true;
-            var mouse = Mouse.current; var mp = Board2D.Mouse(_table);
+            var mouse = Pointer.current; var mp = Board2D.Mouse(_table);
 
             if (mouse != null && mp.HasValue)
             {
                 var p = mp.Value;
-                if (mouse.leftButton.wasPressedThisFrame) Press(p);
+                if (mouse.press.wasPressedThisFrame) Press(p);
                 if (_drag != null)
                 {
                     for (int i = 0; i < _drag.Count; i++) _drag[i].Rt.anchoredPosition = p + _grabOffset + new Vector2(0, -UpGap * i);
-                    if (mouse.leftButton.wasReleasedThisFrame) Drop(p);
+                    if (mouse.press.wasReleasedThisFrame) Drop(p);
                 }
             }
 

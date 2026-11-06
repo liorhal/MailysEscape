@@ -62,6 +62,7 @@ namespace Maily
             Application.targetFrameRate = 120;
 #if UNITY_WEBGL && !UNITY_EDITOR
             WebPerformance();
+            if (Application.absoluteURL.Contains("mute=1")) AudioListener.volume = 0f; // silent test runs
 #endif
         }
 
@@ -70,7 +71,7 @@ namespace Maily
         {
             if (UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline is UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset urp)
             {
-                urp.renderScale = 0.8f;
+                urp.renderScale = Application.isMobilePlatform ? 0.65f : 0.8f;
                 urp.shadowDistance = 45f;
                 urp.msaaSampleCount = 1;
                 urp.shadowCascadeCount = 1;

@@ -8,14 +8,16 @@ using UnityEngine.UI;
 namespace Maily
 {
     /// <summary>
-    /// Overview map of Kibbutz Hatzor (M). The background is a one-time orthographic render of the real
-    /// scene from above; markers show Maily (with heading), home, places, friendly dogs, street dogs,
-    /// dararot, treats and mini-games, with a legend. A north-up minimap centred on Maily is always shown
+    /// Overview map of Kibbutz Hatzor (M), framed on the kibbutz. The background is a one-time orthographic render of the real
+    /// scene from above; markers show only Maily (with heading), her home, dogs (one plain symbol: friend or street
+    /// dog is found out up close), dararot and mini-games (no names), with a legend. A north-up minimap centred on Maily is always shown
     /// bottom-left while exploring; M enlarges it to the full map (the world is frozen while it is open).
     /// </summary>
     public class MapView : MonoBehaviour
     {
-        public float Extent = 640f; // half-width of the mapped square, metres
+        // the mapped square: framed on the kibbutz itself (fences to fences), metres around the dining hall
+        public Vector2 MapCenter = new Vector2(33f, 148f);
+        public float MapExtent = 487f; // half-width
 
         public float MiniRange = 170f; // metres shown across the corner minimap
 
@@ -57,8 +59,8 @@ namespace Maily
             _rt = new RenderTexture(2048, 2048, 24, RenderTextureFormat.ARGB32) { name = "KibbutzMap" };
             var go = new GameObject("MapCamera");
             var cam = go.AddComponent<Camera>();
-            cam.orthographic = true; cam.orthographicSize = Extent;
-            cam.transform.SetPositionAndRotation(new Vector3(0, 400f, 0), Quaternion.Euler(90f, 0f, 0f)); // north (+Z) up
+            cam.orthographic = true; cam.orthographicSize = MapExtent;
+            cam.transform.SetPositionAndRotation(new Vector3(MapCenter.x, 400f, MapCenter.y), Quaternion.Euler(90f, 0f, 0f)); // north (+Z) up
             cam.nearClipPlane = 1f; cam.farClipPlane = 800f;
             cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = Palette.Field;
             var data = go.AddComponent<UniversalAdditionalCameraData>(); data.renderPostProcessing = true;
@@ -107,7 +109,7 @@ namespace Maily
             trt.anchoredPosition = new Vector2(-230, -2); trt.sizeDelta = new Vector2(900, 60);
 
             // legend (right side, RTL)
-            var legend = Rect("Legend", _root, Palette.UiPanel, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-40, 0), new Vector2(440, 830));
+            var legend = Rect("Legend", _root, Palette.UiPanel, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-40, 0), new Vector2(440, 480));
             legend.pivot = new Vector2(1f, 0.5f);
             var lt = Label(legend, "מקרא", 40, Palette.CoinGold, TextAlignmentOptions.Right);
             lt.rectTransform.anchorMin = new Vector2(0, 1); lt.rectTransform.anchorMax = new Vector2(1, 1); lt.rectTransform.pivot = new Vector2(0.5f, 1);
@@ -116,15 +118,9 @@ namespace Maily
             {
                 (_tri, Palette.CoinGold, "מיילי"),
                 (_square, Palette.WallWhite, "הבית של מיילי"),
-                (_square, Palette.UiInk, "מקום בקיבוץ"),
-                (_circle, Palette.DogBrown, "כלב חבר (עוד לא נפגשתם)"),
-                (_circle, new Color(Palette.DogBrown.r, Palette.DogBrown.g, Palette.DogBrown.b, 0.35f), "כלב חבר (כבר חברים)"),
-                (_square, Palette.BullyRed, "כלב רחוב (סכנה!)"),
+                (_circle, Palette.DogBrown, "כלב"),
                 (_circle, Palette.ParrotGreen, "דררה"),
-                (_circle, Palette.Bone, "חטיף"),
                 (_star, Palette.MiniSky, "משחקון (F) - מסגרת בצבע המדליה"),
-                (_circle, Palette.MiniSky, "המשפחה של מיילי"),
-                (_square, Palette.Silver, "רכב / קלנועית"),
             };
             for (int i = 0; i < rows.Length; i++)
             {
@@ -148,7 +144,7 @@ namespace Maily
             _miniRoot.pivot = Vector2.zero; _miniRoot.anchoredPosition = new Vector2(32, 32);
             var view = Rect("View", _miniRoot, Palette.Field, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(MiniSize, MiniSize));
             view.gameObject.AddComponent<RectMask2D>();
-            float content = MiniSize * 2f * Extent / MiniRange;
+            float content = MiniSize * 2f * MapExtent / MiniRange;
             _miniContent = Rect("Content", view, Color.clear, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(content, content));
             _miniImage = _miniContent.gameObject.AddComponent<RawImage>(); _miniImage.color = Color.white; _miniImage.raycastTarget = false;
             var layer = Rect("Markers", _miniContent, Color.clear, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
@@ -212,6 +208,14 @@ namespace Maily
             if (miniOn) RenderBackground();
             if (_root.gameObject.activeSelf != gm.MapOpen) _root.gameObject.SetActive(gm.MapOpen);
             if (_miniRoot.gameObject.activeSelf != miniOn) _miniRoot.gameObject.SetActive(miniOn);
+            // phones: the joystick owns the bottom-left corner, so the minimap sits top-left under the hints
+            bool touch = TouchControls.Active;
+            var anchor = touch ? new Vector2(0f, 1f) : Vector2.zero;
+            if (_miniRoot.anchorMin != anchor)
+            {
+                _miniRoot.anchorMin = _miniRoot.anchorMax = anchor; _miniRoot.pivot = anchor;
+                _miniRoot.anchoredPosition = touch ? new Vector2(32, -300) : new Vector2(32, 32);
+            }
             if (gm.MapOpen) DrawMarkers(_big);
             if (miniOn)
             {
@@ -221,7 +225,7 @@ namespace Maily
             }
         }
 
-        Vector2 ToMap(Vector3 w, float size) => new Vector2(w.x / (2f * Extent), w.z / (2f * Extent)) * size;
+        Vector2 ToMap(Vector3 w, float size) => new Vector2((w.x - MapCenter.x) / (2f * MapExtent), (w.z - MapCenter.y) / (2f * MapExtent)) * size;
 
         Image Marker(Sprite s, Color c, Vector3 world, float size, float rot = 0f)
         {
@@ -266,46 +270,20 @@ namespace Maily
         void DrawMarkers(Layer layer)
         {
             _cur = layer; layer.Used = 0; layer.TextsUsed = 0;
-            foreach (var c in Collectible.All) Marker(_circle, c.IsCoin ? Palette.CoinGold : Palette.Bone, c.transform.position, 7f);
             foreach (var l in Landmark.All)
-            {
-                bool home = l.Type == Landmark.Kind.Home;
-                Marker(_square, home ? Palette.WallWhite : Palette.UiPaper, l.transform.position, home ? 18f : 10f, 45f);
-                Text(l.Label, l.transform.position, home ? Palette.CoinGold : Palette.UiPaper, home ? 26f : 22f, new Vector2(0, 20));
-            }
+                if (l.Type == Landmark.Kind.Home) Marker(_square, Palette.WallWhite, l.transform.position, 18f, 45f);
             foreach (var p in Parrot.All) Marker(_circle, p.Chased ? new Color(Palette.ParrotGreen.r, Palette.ParrotGreen.g, Palette.ParrotGreen.b, 0.35f) : Palette.ParrotGreen, p.transform.position, 12f);
-            foreach (var d in NpcDog.All)
-            {
-                var c = d.Met ? new Color(Palette.DogBrown.r, Palette.DogBrown.g, Palette.DogBrown.b, 0.4f) : Palette.DogBrown;
-                Marker(_circle, Palette.UiPaper, d.transform.position, 22f);
-                Marker(_circle, c, d.transform.position, 17f);
-                if (!d.Met) Text(d.DogName, d.transform.position, Palette.UiPaper, 20f, new Vector2(0, -20));
-            }
-            foreach (var h in HostileDog.All)
-            {
-                Marker(_square, Palette.UiInk, h.transform.position, 24f, 45f);
-                Marker(_square, h.Defeated ? Palette.DogGray : Palette.BullyRed, h.transform.position, 18f, 45f);
-                Text(h.DogName, h.transform.position, h.Defeated ? Palette.Silver : Palette.BullyRed, 22f, new Vector2(0, -22));
-            }
+            // every dog looks the same on the map: friend or street dog, you find out up close
+            void Dog(Vector3 p) { Marker(_circle, Palette.UiPaper, p, 22f); Marker(_circle, Palette.DogBrown, p, 17f); }
+            foreach (var d in NpcDog.All) Dog(d.transform.position);
+            foreach (var h in HostileDog.All) Dog(h.transform.position);
             foreach (var s in MiniGameSpot.All)
             {
                 int best = s.BestMedal;
                 Marker(_star, Palette.UiInk, s.transform.position, 44f);
                 Marker(_star, best > 0 ? MiniGameSpot.MedalColor(best) : Palette.UiPaper, s.transform.position, 38f);
                 Marker(_star, s.Accent, s.transform.position, 28f);
-                Text(s.Title, s.transform.position, s.Accent, 25f, new Vector2(0, -30));
             }
-            foreach (var v in TrafficVehicle.All)
-            {
-                Marker(_square, Palette.UiInk, v.transform.position, v.IsCart ? 13f : 17f, -v.transform.eulerAngles.y);
-                Marker(_square, v.IsCart ? Palette.WallWhite : Palette.Silver, v.transform.position, v.IsCart ? 9f : 12f, -v.transform.eulerAngles.y);
-            }
-            if (Family.I != null)
-                foreach (var f in Family.I.Members)
-                {
-                    Marker(_circle, Palette.UiInk, f.transform.position, 20f);
-                    Marker(_circle, Palette.MiniSky, f.transform.position, 15f);
-                }
             var m = MailyController.I;
             if (m != null)
             {

@@ -52,10 +52,10 @@ namespace Maily
             return t;
         }
 
-        /// <summary>Mouse position in the table's local space (pivot-centred), or null without a mouse.</summary>
+        /// <summary>Pointer (mouse or finger) position in the table's local space (pivot-centred), or null.</summary>
         public static Vector2? Mouse(RectTransform table)
         {
-            var m = UnityEngine.InputSystem.Mouse.current; if (m == null) return null;
+            var m = Pointer.current; if (m == null) return null;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(table, m.position.ReadValue(), null, out var local);
             return local;
         }

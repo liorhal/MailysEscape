@@ -12,6 +12,8 @@ namespace Maily
         public Kind Game;
         public Transform Icon;
         public Renderer Ring;
+        /// <summary>Light column into the sky so spots can be found from far away.</summary>
+        public GameObject Beam;
 
         public string Title => Game switch
         {
@@ -66,6 +68,7 @@ namespace Maily
             Icon.localRotation = Quaternion.Euler(0, Time.time * 70f, 0);
             bool busy = MiniGameManager.I != null && MiniGameManager.I.Busy;
             if (Ring != null) Ring.enabled = !busy || MiniGameManager.I.CurrentSpot == this;
+            if (Beam != null && Beam.activeSelf == busy) Beam.SetActive(!busy);
         }
 
         public static string MedalName(int m) => m switch { 3 => "זהב", 2 => "כסף", 1 => "ארד", _ => "" };

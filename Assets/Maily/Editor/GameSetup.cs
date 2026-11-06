@@ -83,6 +83,7 @@ namespace Maily.EditorTools
             systems.AddComponent<Captions>();
             systems.AddComponent<HouseInterior>();
             systems.AddComponent<Finale>();
+            systems.AddComponent<TouchControls>();
             var fcGo = new GameObject("Fight Camera");
             var fc = fcGo.AddComponent<CinemachineCamera>();
             var fl = LensSettings.Default; fl.FieldOfView = 45f; fl.NearClipPlane = 0.1f; fl.FarClipPlane = 1500f; fc.Lens = fl;
@@ -284,6 +285,41 @@ namespace Maily.EditorTools
             return $"Family: door @ ({fam.Door.x:0},{fam.Door.z:0}), {bd:0.0} m from the gate";
         }
 
+        /// <summary>A coloured column of light from the spot into the sky (see-through, unlit, no shadows).</summary>
+        static void AddBeam(MiniGameSpot spot)
+        {
+            var root = new GameObject("Beam"); root.transform.SetParent(spot.transform, false);
+            foreach (var (radius, alpha, name) in new[] { (2.6f, 0.28f, "Outer"), (0.9f, 0.7f, "Core") })
+            {
+                var c = GameObject.CreatePrimitive(PrimitiveType.Cylinder); c.name = name;
+                Object.DestroyImmediate(c.GetComponent<Collider>());
+                c.transform.SetParent(root.transform, false);
+                c.transform.localPosition = new Vector3(0, 70f, 0); c.transform.localScale = new Vector3(radius, 70f, radius);
+                var r = c.GetComponent<MeshRenderer>();
+                r.sharedMaterial = BeamMaterial(spot.Game + name, spot.Accent, alpha);
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; r.receiveShadows = false;
+            }
+            spot.Beam = root;
+        }
+
+        static Material BeamMaterial(string key, Color c, float alpha)
+        {
+            var path = $"{Mats.Folder}/M_Beam_{key}.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(Shader.Find("Universal Render Pipeline/Unlit")); AssetDatabase.CreateAsset(m, path); }
+            m.shader = Shader.Find("Universal Render Pipeline/Unlit");
+            // transparent (alpha blend keeps the colour against a bright sky), double-sided, no depth write
+            m.SetFloat("_Surface", 1f); m.SetFloat("_Blend", 0f); m.SetFloat("_Cull", 0f); m.SetFloat("_ZWrite", 0f);
+            m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha); m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            m.SetFloat("_SrcBlendAlpha", (float)UnityEngine.Rendering.BlendMode.One); m.SetFloat("_DstBlendAlpha", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            m.SetColor("_BaseColor", new Color(c.r, c.g, c.b, alpha));
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
         static Bounds Bounds(GameObject go)
         {
             var rs = go.GetComponentsInChildren<Renderer>();
@@ -445,6 +481,7 @@ namespace Maily.EditorTools
                 go.transform.SetPositionAndRotation(pick, Quaternion.Euler(0, rnd.Next(360), 0));
                 var spot = go.AddComponent<MiniGameSpot>(); spot.Game = kind;
                 CharacterKit.BuildSpot(spot);
+                AddBeam(spot);
                 log.Add($"{kind} @ ({pick.x:0},{pick.z:0})");
             }
             return string.Join(", ", log);

@@ -44,13 +44,13 @@ namespace Maily
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = 0.5f;
             var root = (RectTransform)go.transform;
 
-            _page = Board2D.Box("Page", root, new Color(0.98f, 0.95f, 0.87f, 0.96f), new Vector2(0, -128), new Vector2(1010, 168), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f));
+            _page = Board2D.Box("Page", root, new Color(Palette.UiInk.r, Palette.UiInk.g, Palette.UiInk.b, 0.55f), new Vector2(0, -128), new Vector2(1010, 168), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f));
             _page.pivot = new Vector2(0.5f, 1f);
             Board2D.Box("Spine", _page, Palette.BullyRed, new Vector2(493, 0), new Vector2(14, 168));   // a book's red spine on the right (RTL)
             _group = _page.gameObject.AddComponent<CanvasGroup>();
-            _head = Board2D.Label(_page, "", 22, Palette.Bronze, new Vector2(-10, 58), new Vector2(940, 30));
+            _head = Board2D.Label(_page, "", 22, Palette.CoinGold, new Vector2(-10, 58), new Vector2(940, 30));
             _head.alignment = TextAlignmentOptions.Right;
-            _body = Board2D.Label(_page, "", 29, Palette.UiInk, new Vector2(-16, -14), new Vector2(940, 100));
+            _body = Board2D.Label(_page, "", 29, Palette.UiPaper, new Vector2(-16, -14), new Vector2(940, 100));
             _body.enableAutoSizing = true; _body.fontSizeMin = 22; _body.fontSizeMax = 29;
             _body.alignment = TextAlignmentOptions.Right; _body.lineSpacing = 12f;
             _page.gameObject.SetActive(false);

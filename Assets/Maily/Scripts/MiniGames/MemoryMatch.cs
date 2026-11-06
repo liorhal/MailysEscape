@@ -105,7 +105,7 @@ namespace Maily
                 _hide -= dt;
                 if (_hide <= 0f) { _a.Up = false; _b.Up = false; _a = _b = null; }
             }
-            else if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && Board2D.Mouse(_table) is Vector2 p)
+            else if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame && Board2D.Mouse(_table) is Vector2 p)
             {
                 foreach (var t in _tiles)
                 {

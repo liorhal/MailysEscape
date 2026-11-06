@@ -15,6 +15,8 @@ namespace Maily
         RectTransform _title, _hud, _pause, _end;
         TextMeshProUGUI _prompt, _treats, _dogs, _parrots, _bullies, _timer, _toast, _endTime, _endStats, _friendHint, _parrotHint, _endTitle, _endText, _endCount;
         Image _fade, _friendArrow, _parrotArrow;
+        RectTransform _controls;
+        static Sprite _arrowSprite;
         CanvasGroup _toastGroup, _controlsGroup;
         float _toastT = 99f, _fadeA, _controlsT;
         GameState _shown = (GameState)(-1);
@@ -65,7 +67,7 @@ namespace Maily
             _toastGroup = toast.gameObject.AddComponent<CanvasGroup>(); _toastGroup.alpha = 0;
             _toast = Text(toast, "", 36, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Bold);
 
-            var ctl = Panel("Controls", _hud, Palette.UiPanel, new Vector2(1, 0), new Vector2(1, 0), new Vector2(-32, 32), new Vector2(600, 130), new Vector2(1, 0));
+            var ctl = _controls = Panel("Controls", _hud, Palette.UiPanel, new Vector2(1, 0), new Vector2(1, 0), new Vector2(-32, 32), new Vector2(600, 130), new Vector2(1, 0));
             _controlsGroup = ctl.gameObject.AddComponent<CanvasGroup>();
             var c1 = Text(ctl, "WASD ריצה    Shift ספרינט    רווח קפיצה", 28, Palette.UiPaper, TextAlignmentOptions.Right, FontStyles.Normal);
             c1.rectTransform.anchorMin = new Vector2(0, 0.5f); c1.margin = new Vector4(22, 0, 22, 0);
@@ -131,7 +133,10 @@ namespace Maily
             var r = Panel("Hint", parent, Palette.UiPanel, new Vector2(0, 1), new Vector2(1, 1), new Vector2(0, -row * 58), new Vector2(0, 50), new Vector2(0.5f, 1));
             var a = new GameObject("Arrow", typeof(RectTransform)).GetComponent<RectTransform>();
             a.SetParent(r, false); a.anchorMin = a.anchorMax = new Vector2(1, 0.5f); a.anchoredPosition = new Vector2(-30, 0); a.sizeDelta = new Vector2(30, 30);
-            arrow = a.gameObject.AddComponent<Image>(); arrow.sprite = _tri; arrow.color = c; arrow.raycastTarget = false;
+            a.sizeDelta = new Vector2(36, 36);
+            // a proper arrow (shaft + head) pointing up; rotated towards the target
+            if (_arrowSprite == null) _arrowSprite = Board2D.MakeShape(64, (x, y) => (y > 0.05f && y < 0.95f && Mathf.Abs(x) <= (0.95f - y) * 0.95f) || (Mathf.Abs(x) <= 0.2f && y >= -0.92f && y <= 0.1f));
+            arrow = a.gameObject.AddComponent<Image>(); arrow.sprite = _arrowSprite; arrow.color = c; arrow.raycastTarget = false;
             var t = Text(r, "", 28, Palette.UiPaper, TextAlignmentOptions.Right, FontStyles.Normal);
             t.margin = new Vector4(10, 0, 60, 0);
             return t;
@@ -220,13 +225,14 @@ namespace Maily
             var k = Keyboard.current; var pad = Gamepad.current; var mouse = Mouse.current;
             if (gm.State == GameState.Title)
             {
-                bool any = (k != null && k.anyKey.wasPressedThisFrame) || (pad != null && (pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame)) || (mouse != null && mouse.leftButton.wasPressedThisFrame);
+                bool any = (k != null && k.anyKey.wasPressedThisFrame) || (pad != null && (pad.startButton.wasPressedThisFrame || pad.buttonSouth.wasPressedThisFrame)) || (mouse != null && mouse.leftButton.wasPressedThisFrame) || (Pointer.current != null && Pointer.current.press.wasPressedThisFrame);
                 if (any) { Sfx.I?.Play2D(Sfx.I.Click); gm.StartGame(); _controlsT = 0; }
                 _prompt.alpha = Mathf.Lerp(0.5f, 1f, 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * Mathf.PI * 2f / 1.6f));
             }
             else if (((k != null && k.escapeKey.wasPressedThisFrame) || (pad != null && pad.startButton.wasPressedThisFrame))
                      && !gm.MapOpen && gm.MapClosedFrame != Time.frameCount) gm.TogglePause();
 
+            if (_controls != null && _controls.gameObject.activeSelf == TouchControls.Active) _controls.gameObject.SetActive(!TouchControls.Active);
             if (gm.State == GameState.Playing || gm.State == GameState.Paused)
             {
                 Heb.Set(_timer, GameManager.FormatTime(gm.RunTime));

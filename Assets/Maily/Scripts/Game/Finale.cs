@@ -17,6 +17,8 @@ namespace Maily
     public class Finale : MonoBehaviour
     {
         public static Finale I { get; private set; }
+        /// <summary>The obstacle chase is on (touch controls show jump / duck).</summary>
+        public bool Running => _phase == Phase.Runner;
 
         enum Phase { Off, Pack, Runner }
         Phase _phase = Phase.Off;

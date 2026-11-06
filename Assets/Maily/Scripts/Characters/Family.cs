@@ -147,7 +147,8 @@ namespace Maily
         void StartChase(bool first)
         {
             _phase = Phase.Chase; Chasing = true; _chaseTime = 0f;
-            GameManager.I.Say(first ? "יש לך 20 שניות לברוח מהמשפחה! (Shift לריצה מהירה)" : "\"הנה מיילי! תפסו אותה!\"  20 שניות לברוח!");
+            string run = TouchControls.Active ? "כפתור ריצה" : "Shift";
+            GameManager.I.Say(first ? $"יש לך 20 שניות לברוח מהמשפחה! ({run} לריצה מהירה)" : "\"הנה מיילי! תפסו אותה!\"  20 שניות לברוח!");
             Sfx.I?.Play2D(Sfx.I.Whoosh, 0.7f);
         }
 
