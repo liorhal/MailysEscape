@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+    <title>הבריחה הגדולה של מיילי</title>
+    <style>
+      :root { --ink: #2B2833; --paper: #FBF6EA; --gold: #F5C542; --sky: #8EC5E8; }
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: var(--ink); }
+      #game { position: fixed; inset: 0; }
+      #unity-canvas { width: 100%; height: 100%; display: block; background: var(--ink); outline: none; }
+      #loading {
+        position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 22px; background: radial-gradient(circle at 50% 40%, #3a3644 0%, var(--ink) 70%);
+        font-family: "Rubik", "Segoe UI", Arial, sans-serif; color: var(--paper); text-align: center; padding: 16px;
+      }
+      #loading h1 { margin: 0; font-size: clamp(28px, 6vw, 64px); color: var(--gold); font-weight: 700; }
+      #loading p { margin: 0; font-size: clamp(15px, 2.4vw, 22px); opacity: 0.8; }
+      #bar { width: min(520px, 80vw); height: 14px; border-radius: 7px; background: rgba(255,255,255,0.12); overflow: hidden; }
+      #fill { width: 0%; height: 100%; border-radius: 7px; background: var(--gold); transition: width 0.2s; }
+      #note { font-size: 14px; opacity: 0.55; }
+      #warn { position: fixed; top: 0; left: 0; right: 0; z-index: 5; font-family: Arial, sans-serif; }
+      #warn div { padding: 10px; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div id="game"><canvas id="unity-canvas" tabindex="-1"></canvas></div>
+    <div id="loading">
+      <h1>הבריחה הגדולה של מיילי</h1>
+      <p>יום של כלבה בקיבוץ חצור</p>
+      <div id="bar"><div id="fill"></div></div>
+      <div id="note">טוען... (בפעם הראשונה זה לוקח קצת זמן)</div>
+    </div>
+    <div id="warn"></div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      function showBanner(msg, type) {
+        var warn = document.querySelector("#warn");
+        var div = document.createElement("div");
+        div.textContent = msg;
+        div.style.background = type == "error" ? "#E2493B" : "#F5C542";
+        warn.appendChild(div);
+        if (type != "error") setTimeout(function () { warn.removeChild(div); }, 5000);
+      }
+      var buildUrl = "Build";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/Web.data.unityweb",
+        frameworkUrl: buildUrl + "/Web.framework.js.unityweb",
+        codeUrl: buildUrl + "/Web.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Lior Halachmi",
+        productName: "Maily's Great Escape",
+        productVersion: "0.1.0",
+        showBanner: showBanner,
+        devicePixelRatio: 1,   // render at CSS pixels: much lighter on laptop GPUs
+      };
+      var script = document.createElement("script");
+      script.src = buildUrl + "/Web.loader.js";
+      script.onload = function () {
+        createUnityInstance(canvas, config, function (progress) {
+          document.querySelector("#fill").style.width = (100 * progress) + "%";
+        }).then(function () {
+          document.querySelector("#loading").style.display = "none";
+          canvas.focus();
+        }).catch(function (message) { showBanner(message, "error"); });
+      };
+      document.body.appendChild(script);
+      // keyboard focus for the game whenever it's clicked
+      canvas.addEventListener("pointerdown", function () { canvas.focus(); });
+    </script>
+  </body>
+</html>
