@@ -170,15 +170,15 @@ namespace Maily.EditorTools
             var lens = LensSettings.Default; lens.FieldOfView = 55f; lens.NearClipPlane = 0.1f; lens.FarClipPlane = 1500f; game.Lens = lens;
             var orbit = gameGo.AddComponent<CinemachineOrbitalFollow>();
             orbit.OrbitStyle = CinemachineOrbitalFollow.OrbitStyles.Sphere;
-            orbit.Radius = 4.2f;
+            orbit.Radius = 2.2f; // close, looking down on Maily from behind and above
             orbit.TrackerSettings.BindingMode = BindingMode.WorldSpace;
-            orbit.TrackerSettings.PositionDamping = new Vector3(0.4f, 0.3f, 0.4f);
+            orbit.TrackerSettings.PositionDamping = new Vector3(0.22f, 0.2f, 0.22f);
             orbit.HorizontalAxis.Range = new Vector2(-180, 180); orbit.HorizontalAxis.Wrap = true; orbit.HorizontalAxis.Value = Mathf.DeltaAngle(0, yaw);
-            orbit.VerticalAxis.Range = new Vector2(-10, 70); orbit.VerticalAxis.Value = 16f;
+            orbit.VerticalAxis.Range = new Vector2(10, 75); orbit.VerticalAxis.Value = 35f;
             orbit.HorizontalAxis.Recentering.Enabled = false; orbit.VerticalAxis.Recentering.Enabled = false;
             var comp = gameGo.AddComponent<CinemachineRotationComposer>();
             comp.Damping = new Vector2(0.35f, 0.35f);
-            comp.TargetOffset = new Vector3(0, 0.35f, 0);
+            comp.TargetOffset = new Vector3(0, 0.25f, 0);
 
             var titleGo = new GameObject("Title Camera");
             var title = titleGo.AddComponent<CinemachineCamera>();

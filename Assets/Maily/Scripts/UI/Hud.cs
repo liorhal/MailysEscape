@@ -59,7 +59,8 @@ namespace Maily
             _friendHint = HintRow(hints, 0, Palette.DogBrown, out _friendArrow);
             _parrotHint = HintRow(hints, 1, Palette.ParrotGreen, out _parrotArrow);
 
-            var toast = Panel("Toast", _hud, Palette.UiPanel, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 210), new Vector2(1400, 84), new Vector2(0.5f, 0));
+            // top centre: the close, high camera keeps Maily in the lower middle of the screen
+            var toast = Panel("Toast", _hud, Palette.UiPanel, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -32), new Vector2(1000, 84), new Vector2(0.5f, 1));
             _toastGroup = toast.gameObject.AddComponent<CanvasGroup>(); _toastGroup.alpha = 0;
             _toast = Text(toast, "", 36, Palette.UiPaper, TextAlignmentOptions.Center, FontStyles.Bold);
 
