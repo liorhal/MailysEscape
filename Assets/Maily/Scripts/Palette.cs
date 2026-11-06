@@ -58,6 +58,13 @@ namespace Maily
         public static readonly Color BullyMuzzle = H("#9C8A78");
         public static readonly Color Spike       = H("#C9CCD1"); // studded collar
 
+        // mini-games & medals
+        public static readonly Color MiniSky     = H("#4FC3F7"); // gate race
+        public static readonly Color MiniFrisbee = H("#FF7A3D"); // frisbee
+        public static readonly Color MiniDirt    = H("#8A6A48"); // bone hunt soil
+        public static readonly Color Bronze      = H("#C98A4B");
+        public static readonly Color Silver      = H("#D3D8E0");
+
         // Shadow & accents
         public static readonly Color Shadow      = H("#5E6F8C"); // cool slate
         public static readonly Color CoinGold    = H("#F5C542"); // accent — everything that scores glows

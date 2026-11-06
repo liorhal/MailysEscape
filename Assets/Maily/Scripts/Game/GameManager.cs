@@ -38,6 +38,22 @@ namespace Maily
         public bool InWorld => State == GameState.Playing || State == GameState.Fighting;
         public bool PausedFromFight => State == GameState.Paused && _resumeState == GameState.Fighting;
 
+        /// <summary>Overview map: freezes the world while open (only from free exploration).</summary>
+        public bool MapOpen { get; private set; }
+        public int MapClosedFrame { get; private set; } = -1; // so the same Esc press doesn't also open Pause
+        public void ToggleMap()
+        {
+            if (MapOpen) { MapOpen = false; MapClosedFrame = Time.frameCount; Time.timeScale = 1f; Changed?.Invoke(); return; }
+            if (State != GameState.Playing) return;
+            MapOpen = true; Time.timeScale = 0f; Changed?.Invoke();
+        }
+
+        /// <summary>Bonus treats from mini-games count toward the treats goal.</summary>
+        public void AddBonusTreats(int n)
+        {
+            for (int i = 0; i < n && State == GameState.Playing; i++) AddTreat(false);
+        }
+
         void Awake()
         {
             I = this;
@@ -97,6 +113,7 @@ namespace Maily
         void SetState(GameState s)
         {
             State = s;
+            MapOpen = false;
             Time.timeScale = s == GameState.Paused ? 0f : 1f;
             Debug.Log($"[Maily] State -> {s}");
             StateChanged?.Invoke(s);

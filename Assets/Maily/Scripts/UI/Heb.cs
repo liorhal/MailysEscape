@@ -7,7 +7,7 @@ namespace Maily
     /// <summary>
     /// Hebrew text for TextMeshPro. TMP's right-to-left mode reverses the whole string, which would
     /// also flip numbers and Latin key names ("0:45" → "54:0"). Prep() pre-reverses those LTR runs so
-    /// they come out the right way round. Keep Hebrew strings free of rich-text tags and brackets.
+    /// they come out the right way round, and mirrors brackets. Keep Hebrew strings free of rich-text tags.
     /// Font: Rubik (SIL Open Font License, see Assets/Maily/Fonts/Rubik-OFL.txt).
     /// </summary>
     public static class Heb
@@ -25,6 +25,9 @@ namespace Maily
         }
 
         static bool IsLtr(char c) => (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+        /// <summary>Bidi mirroring: in right-to-left text an opening bracket is drawn as its mirror glyph.</summary>
+        static char Mirror(char c) => c switch { '(' => ')', ')' => '(', '[' => ']', ']' => '[', '{' => '}', '}' => '{', '<' => '>', '>' => '<', _ => c };
+
         static bool IsJoiner(char c) => c == ':' || c == '/' || c == '.' || c == ',' || c == '-' || c == '+' || c == ' ';
 
         /// <summary>Logical-order Hebrew → string ready for TMP with isRightToLeftText = true.</summary>
@@ -35,7 +38,7 @@ namespace Maily
             int i = 0;
             while (i < s.Length)
             {
-                if (!IsLtr(s[i])) { sb.Append(s[i]); i++; continue; }
+                if (!IsLtr(s[i])) { sb.Append(Mirror(s[i])); i++; continue; }
                 // extend the run across joiners only when more LTR characters follow ("1 / 50", "0:45")
                 int end = i;
                 int j = i + 1;

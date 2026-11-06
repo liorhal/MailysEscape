@@ -37,7 +37,7 @@ namespace Maily
         {
             if (FightLock) return;
             var gm = GameManager.I;
-            bool active = gm == null || gm.State == GameState.Playing;
+            bool active = gm == null || (gm.State == GameState.Playing && !gm.MapOpen);
             Vector2 input = Vector2.zero; bool jump = false, sprint = false, bark = false;
             if (active) ReadInput(out input, out jump, out sprint, out bark);
 

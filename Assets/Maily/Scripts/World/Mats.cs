@@ -13,9 +13,12 @@ namespace Maily
         public static Material Get(string key, Color color, float smooth = 0.12f, float emission = 0f)
         {
             if (Cache.TryGetValue(key, out var m) && m != null) return m;
+            // Edit mode (scene build): materials are saved as assets. Play mode / builds: runtime-only
+            // materials, so gameplay never edits or creates project assets.
+            bool asAsset = !Application.isPlaying;
 #if UNITY_EDITOR
             var path = $"{Folder}/M_{key}.mat";
-            m = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (asAsset) m = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(path);
 #endif
             if (m == null)
             {
@@ -23,8 +26,7 @@ namespace Maily
                     ? GraphicsSettings.currentRenderPipeline.defaultMaterial : null;
                 m = baseMat != null ? new Material(baseMat) : new Material(Shader.Find("Universal Render Pipeline/Lit"));
 #if UNITY_EDITOR
-                EnsureFolder();
-                UnityEditor.AssetDatabase.CreateAsset(m, path);
+                if (asAsset) { EnsureFolder(); UnityEditor.AssetDatabase.CreateAsset(m, path); }
 #endif
             }
             m.name = "M_" + key;

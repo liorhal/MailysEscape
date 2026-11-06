@@ -174,6 +174,38 @@ namespace Maily
             c.Spin = spin; c.IsCoin = coin;
         }
 
+        /// <summary>Mini-game start marker: glowing ring, white post, floating icon for the game.</summary>
+        public static void BuildSpot(MiniGameSpot spot)
+        {
+            var root = spot.transform; var c = spot.Accent; string A = "Spot_" + spot.Game, W = Key(Palette.WallWhite);
+            var ring = Part(PrimitiveType.Cylinder, root, new Vector3(0, 0.03f, 0), new Vector3(2.6f, 0.012f, 2.6f), c, A, default, 1.4f);
+            Part(PrimitiveType.Cylinder, root, new Vector3(0, 0.025f, 0), new Vector3(2.2f, 0.014f, 2.2f), Palette.UiInk, Key(Palette.UiInk));
+            Part(PrimitiveType.Cylinder, root, new Vector3(0, 0.75f, 0), new Vector3(0.1f, 0.75f, 0.1f), Palette.WallWhite, W);
+            var icon = Pivot("Icon", root, new Vector3(0, 2.1f, 0));
+            Part(PrimitiveType.Sphere, icon, Vector3.zero, Vector3.one * 0.7f, c, A, default, 1.4f); // glowing orb behind the symbol
+            switch (spot.Game)
+            {
+                case MiniGameSpot.Kind.Gates:
+                    Part(PrimitiveType.Cube, icon, new Vector3(-0.35f, 0, 0), new Vector3(0.08f, 0.7f, 0.08f), Palette.WallWhite, W);
+                    Part(PrimitiveType.Cube, icon, new Vector3(0.35f, 0, 0), new Vector3(0.08f, 0.7f, 0.08f), Palette.WallWhite, W);
+                    Part(PrimitiveType.Cube, icon, new Vector3(0, 0.35f, 0), new Vector3(0.78f, 0.08f, 0.08f), Palette.WallWhite, W);
+                    break;
+                case MiniGameSpot.Kind.Frisbee:
+                    Part(PrimitiveType.Cylinder, icon, Vector3.zero, new Vector3(0.9f, 0.03f, 0.9f), Palette.WallWhite, W, new Vector3(70, 0, 0));
+                    break;
+                case MiniGameSpot.Kind.Oranges:
+                    Part(PrimitiveType.Sphere, icon, new Vector3(0, 0, 0.3f), Vector3.one * 0.42f, Palette.Citrus, "OrangeIcon", default, 0.6f);
+                    Part(PrimitiveType.Cube, icon, new Vector3(0.05f, 0.22f, 0.3f), new Vector3(0.14f, 0.04f, 0.08f), Palette.Foliage, Key(Palette.Foliage));
+                    break;
+                default:
+                    Part(PrimitiveType.Capsule, icon, new Vector3(0, 0, 0.3f), new Vector3(0.12f, 0.3f, 0.12f), Palette.Bone, "Bone", new Vector3(0, 0, 90), 0.35f);
+                    foreach (var x in new[] { -0.3f, 0.3f }) foreach (var y in new[] { -0.07f, 0.07f })
+                        Part(PrimitiveType.Sphere, icon, new Vector3(x, y, 0.3f), Vector3.one * 0.14f, Palette.Bone, "Bone", default, 0.35f);
+                    break;
+            }
+            spot.Icon = icon; spot.Ring = ring.GetComponent<Renderer>();
+        }
+
         /// <summary>Maily's doghouse + water bowl beside her home.</summary>
         public static GameObject BuildDoghouse(Vector3 pos, float yaw)
         {

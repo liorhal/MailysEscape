@@ -70,7 +70,9 @@ namespace Maily
             var maily = MailyController.I;
             Vector3 toM = maily != null ? maily.transform.position - transform.position : Vector3.one * 999; toM.y = 0;
             float dM = toM.magnitude;
-            bool playing = GameManager.I != null && GameManager.I.State == GameState.Playing;
+            // street dogs leave Maily alone while she plays a mini-game
+            bool playing = GameManager.I != null && GameManager.I.State == GameState.Playing
+                           && !(MiniGameManager.I != null && MiniGameManager.I.Busy);
 
             float speed = 0f; Vector3 dest = transform.position;
             if (!Defeated && playing && _cooldown <= 0f && _mode != Mode.Charge && dM < NoticeDist)

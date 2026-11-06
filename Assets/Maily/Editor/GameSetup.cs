@@ -44,13 +44,17 @@ namespace Maily.EditorTools
             var dh = CharacterKit.BuildDoghouse(home.pos, home.yaw);
             dh.transform.SetParent(world.Root.transform, true);
             Physics.SyncTransforms();
+            log.AppendLine(PropScatter.Scatter(world, rnd, world.Root.transform, spawn));
 
             var gameplay = new GameObject("Gameplay").transform;
             int dogs = SpawnDogs(world, rnd, gameplay, spawn);
             int parrots = SpawnParrots(world, rnd, gameplay, spawn);
             int treats = SpawnTreats(world, rnd, gameplay, spawn);
             int bullies = SpawnBullies(world, rnd, gameplay, spawn);
+            string spots = SpawnMiniGames(world, rnd, gameplay, spawn);
+            int landmarks = SpawnLandmarks(world, rnd, gameplay, home.pos);
             log.AppendLine($"Spawned: Maily @ {spawn}, {dogs} dogs, {parrots} parrots, {treats} treats, {bullies} street dogs");
+            log.AppendLine($"Mini-games: {spots}; landmarks: {landmarks}");
 
             var systems = new GameObject("Systems");
             var gm = systems.AddComponent<GameManager>();
@@ -67,6 +71,9 @@ namespace Maily.EditorTools
             // street-dog fights: manager, overlay and the side-view fight camera
             var fm = systems.AddComponent<FightManager>();
             systems.AddComponent<FightHud>();
+            systems.AddComponent<MiniGameManager>();
+            systems.AddComponent<MiniGameHud>();
+            systems.AddComponent<MapView>();
             var fcGo = new GameObject("Fight Camera");
             var fc = fcGo.AddComponent<CinemachineCamera>();
             var fl = LensSettings.Default; fl.FieldOfView = 45f; fl.NearClipPlane = 0.1f; fl.FarClipPlane = 1500f; fc.Lens = fl;
@@ -336,6 +343,97 @@ namespace Maily.EditorTools
                 CharacterKit.BuildParrot(parrot);
             }
             return picks.Count;
+        }
+
+        static string SpawnMiniGames(KibbutzBuilder.Result w, System.Random rnd, Transform parent, Vector3 spawn)
+        {
+            var taken = new List<Vector3> { spawn };
+            taken.AddRange(Object.FindObjectsByType<HostileDog>(FindObjectsInactive.Include).Select(d => d.transform.position));
+            var log = new List<string>();
+            bool Ok(Vector3 p, float clear) => taken.All(t => (t - p).magnitude > 70f) && Free(p, clear);
+
+            // candidate points per game, best first
+            var bySize = w.Areas.OrderByDescending(a => a.area).ToList();
+            List<Vector3> AreaPoints(params string[] kinds) =>
+                bySize.Where(a => kinds.Contains(a.kind)).SelectMany(a =>
+                {
+                    var pts = new List<Vector3>();
+                    var c = Geo.Centroid(a.poly);
+                    if (Geo.Contains(a.poly, c) && c.magnitude < 560f) pts.Add(new Vector3(c.x, 0.05f, c.y));
+                    var min = new Vector2(a.poly.Min(p => p.x), a.poly.Min(p => p.y)); var max = new Vector2(a.poly.Max(p => p.x), a.poly.Max(p => p.y));
+                    for (int i = 0; i < 30; i++)
+                    {
+                        var p = new Vector2(Mathf.Lerp(min.x, max.x, (float)rnd.NextDouble()), Mathf.Lerp(min.y, max.y, (float)rnd.NextDouble()));
+                        if (p.magnitude < 560f && Geo.Contains(a.poly, p)) pts.Add(new Vector3(p.x, 0.05f, p.y));
+                    }
+                    return pts;
+                }).ToList();
+
+            var plan = new (MiniGameSpot.Kind kind, List<Vector3> pts, float clear)[]
+            {
+                (MiniGameSpot.Kind.Gates, AreaPoints("pitch", "sports_centre", "park", "grass"), 2.5f),
+                (MiniGameSpot.Kind.Frisbee, AreaPoints("grass", "park", "village_green"), 2.5f),
+                // the orchard closest to the houses
+                (MiniGameSpot.Kind.Oranges, AreaPoints("orchard").OrderBy(p => p.magnitude).ToList(), 0.9f),
+                (MiniGameSpot.Kind.Bones, AreaPoints("park", "wood", "grass"), 1.5f),
+            };
+            foreach (var (kind, pts, clear) in plan)
+            {
+                var pick = pts.FirstOrDefault(p => Ok(p, clear));
+                if (pick == default) pick = pts.FirstOrDefault(p => Ok(p, 0.8f));
+                if (pick == default) { log.Add(kind + ": no spot"); continue; }
+                taken.Add(pick);
+                var go = new GameObject("MiniGame " + kind);
+                go.transform.SetParent(parent);
+                go.transform.SetPositionAndRotation(pick, Quaternion.Euler(0, rnd.Next(360), 0));
+                var spot = go.AddComponent<MiniGameSpot>(); spot.Game = kind;
+                CharacterKit.BuildSpot(spot);
+                log.Add($"{kind} @ ({pick.x:0},{pick.z:0})");
+            }
+            return string.Join(", ", log);
+        }
+
+        static int SpawnLandmarks(KibbutzBuilder.Result w, System.Random rnd, Transform parent, Vector3 home)
+        {
+            var root = new GameObject("Landmarks").transform; root.SetParent(parent);
+            var placed = new List<(string label, Vector3 p)>();
+            void Add(string label, Vector2 c, Landmark.Kind kind = Landmark.Kind.Place)
+            {
+                var p = new Vector3(c.x, 0f, c.y);
+                if (c.magnitude > 600f) return;
+                if (placed.Any(x => x.label == label && (x.p - p).magnitude < 90f)) return;   // one label per area
+                if (placed.Any(x => (x.p - p).magnitude < 18f)) return;                        // keep the map readable
+                placed.Add((label, p));
+                var go = new GameObject("Landmark " + label); go.transform.SetParent(root); go.transform.position = p;
+                var l = go.AddComponent<Landmark>(); l.Label = label; l.Type = kind;
+            }
+            Add("הבית של מיילי", new Vector2(home.x, home.z), Landmark.Kind.Home);
+            foreach (var b in w.Layout.buildings)
+            {
+                if (b.name == "Hatzor dining room") Add("חדר האוכל", Geo.Centroid(KibbutzLayout.Points(b.pts)));
+            }
+            var names = new Dictionary<string, (string label, int max)>
+            {
+                { "swimming_pool", ("בריכה", 1) }, { "playground", ("גן שעשועים", 3) }, { "school", ("בית הספר", 1) },
+                { "schoolyard", ("בית הספר", 1) }, { "cemetery", ("בית העלמין", 1) }, { "pitch", ("מגרש ספורט", 2) },
+                { "sports_centre", ("מגרש ספורט", 1) }, { "industrial", ("אזור התעשייה", 1) }, { "wood", ("חורשה", 2) },
+                { "forest", ("חורשה", 1) },
+            };
+            var counts = new Dictionary<string, int>();
+            foreach (var a in w.Areas.OrderByDescending(a => a.area))
+            {
+                if (!names.TryGetValue(a.kind ?? "", out var n)) continue;
+                counts.TryGetValue(a.kind, out int k); if (k >= n.max) continue;
+                var c = Geo.Centroid(a.poly);
+                if (c.magnitude > 600f) continue;
+                Add(n.label, c); counts[a.kind] = k + 1;
+            }
+            foreach (var b in w.Layout.buildings.Where(b => b.kind == "kindergarten").Take(4))
+                Add("גן ילדים", Geo.Centroid(KibbutzLayout.Points(b.pts)));
+            // the orchard nearest the village (its polygon centroid can lie far outside the fence)
+            var orchard = w.Areas.Where(a => a.kind == "orchard").SelectMany(a => a.poly.Where(p => p.magnitude < 560f)).OrderBy(p => p.magnitude).FirstOrDefault();
+            if (orchard != default) Add("פרדס", orchard);
+            return placed.Count;
         }
 
         static int SpawnBullies(KibbutzBuilder.Result w, System.Random rnd, Transform parent, Vector3 spawn)

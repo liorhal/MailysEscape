@@ -69,7 +69,7 @@ namespace Maily
             _controlsGroup = ctl.gameObject.AddComponent<CanvasGroup>();
             var c1 = Text(ctl, "WASD ריצה    Shift ספרינט    רווח קפיצה", 28, Palette.UiPaper, TextAlignmentOptions.Right, FontStyles.Normal);
             c1.rectTransform.anchorMin = new Vector2(0, 0.5f); c1.margin = new Vector4(22, 0, 22, 0);
-            var c2 = Text(ctl, "E נביחה    עכבר הסתכלות    Esc השהיה", 28, Palette.UiPaper, TextAlignmentOptions.Right, FontStyles.Normal);
+            var c2 = Text(ctl, "E נביחה    M מפה    F משחקון    Esc השהיה", 28, Palette.UiPaper, TextAlignmentOptions.Right, FontStyles.Normal);
             c2.rectTransform.anchorMax = new Vector2(1, 0.5f); c2.margin = new Vector4(22, 0, 22, 0);
 
             // ---- Title (backdrop = the live scene) ----
@@ -218,7 +218,8 @@ namespace Maily
                 if (any) { Sfx.I?.Play2D(Sfx.I.Click); gm.StartGame(); _controlsT = 0; }
                 _prompt.alpha = Mathf.Lerp(0.5f, 1f, 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * Mathf.PI * 2f / 1.6f));
             }
-            else if ((k != null && k.escapeKey.wasPressedThisFrame) || (pad != null && pad.startButton.wasPressedThisFrame)) gm.TogglePause();
+            else if (((k != null && k.escapeKey.wasPressedThisFrame) || (pad != null && pad.startButton.wasPressedThisFrame))
+                     && !gm.MapOpen && gm.MapClosedFrame != Time.frameCount) gm.TogglePause();
 
             if (gm.State == GameState.Playing || gm.State == GameState.Paused)
             {
