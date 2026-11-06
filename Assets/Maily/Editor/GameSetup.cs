@@ -215,6 +215,10 @@ namespace Maily.EditorTools
             b = Bounds(model);
             var offset = root.transform.position - new Vector3(b.center.x, b.min.y, b.center.z);
             model.transform.position += offset;
+
+            // skeleton + procedural gait (legs, spine, head, tail); DogBody keeps lean/bank/squash/breath
+            Debug.Log("[Maily] " + MailyRigBuilder.Rig(model, root.GetComponent<MailyController>()));
+            body.BobAmp = 0f; body.GallopPitch = 0f; body.Roll = 1.5f;
             return root.transform;
         }
 
